@@ -1,7 +1,8 @@
-package com.e.btex
+package com.e.btex.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.e.btex.R
 
 class MainActivity : AppCompatActivity() {
 

@@ -1,4 +1,4 @@
-package com.e.btex
+package com.e.btex.ui
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.*
@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.e.btex.R
 import com.e.btex.broadcastReceivers.BluetoothBondStateReceiver
 import com.e.btex.broadcastReceivers.BluetoothDeviceReceiver
 import com.e.btex.broadcastReceivers.BluetoothScanModeReceiver
@@ -26,6 +27,8 @@ class MainFragment : Fragment() {
 
     private lateinit var binding: FragmentMainBinding
     private lateinit var bluetoothAdapter: BluetoothAdapter
+    private lateinit var deviceAdapter: DeviceAdapter
+    private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
 
     private var isBluetoothExist: Boolean = false
 
@@ -55,22 +58,11 @@ class MainFragment : Fragment() {
             true
         } ?: false
 
-
         onDeviceDiscoveredReceiver = BluetoothDeviceReceiver()
         onStateChangedReceiver = BluetoothStateReceiver()
         onScanModeChangedReceiver = BluetoothScanModeReceiver()
         onBondStateReceiver = BluetoothBondStateReceiver()
-//        var intentFilter = IntentFilter(ACTION_STATE_CHANGED)
-//        requireActivity().registerReceiver(onStateChangedReceiver, intentFilter)
-//
-//        intentFilter = IntentFilter(ACTION_SCAN_MODE_CHANGED)
-//        requireActivity().registerReceiver(onScanModeChangedReceiver, intentFilter)
-//
-//        intentFilter = IntentFilter(ACTION_FOUND)
-//        requireActivity().registerReceiver(onDeviceDiscoveredReceiver, intentFilter)
-//
-//        intentFilter = IntentFilter(ACTION_BOND_STATE_CHANGED)
-//        requireActivity().registerReceiver(onBondStateReceiver, intentFilter)
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -87,6 +79,12 @@ class MainFragment : Fragment() {
         binding.buttonFind.setOnClickListener {
             dicoverDevice()
         }
+
+        deviceAdapter = DeviceAdapter {
+            requireActivity().toast(it.name)
+        }
+
+        binding.deviceRecyclerView.adapter = deviceAdapter
 
         return binding.root
     }
@@ -138,6 +136,8 @@ class MainFragment : Fragment() {
             override fun onDeviceReceived(device: BluetoothDevice) {
                 Timber.i("onDeviceReceived:")
                 device.showInfoInLog()
+                deviceList.add(device)
+                deviceAdapter.submitList(deviceList.toList())
             }
 
         })
@@ -194,7 +194,11 @@ class MainFragment : Fragment() {
         bluetoothAdapter.startDiscovery()
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        bluetoothAdapter.cancelDiscovery()
+        bluetoothAdapter.disable()
+    }
 }
 
 

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mainFragment"
-        android:name="com.e.btex.MainFragment"
+        android:name="com.e.btex.ui.MainFragment"
         android:label="MainFragment"
         tools:layout="@layout/fragment_main"
         />

@@ -27,7 +27,6 @@ class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val fi
             @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
             fun onDestroy() {
                 _value?.let {
-                    Timber.d("onDestroy: unregisterReceive $it")
                     fragment.requireActivity().unregisterReceiver(it)
                 }
             }
@@ -42,13 +41,12 @@ class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val fi
 
     override fun setValue(thisRef: Fragment, property: KProperty<*>, value: T) {
         _value = value
-        Timber.d("setValue: registerReceiver $_value")
         val intentFilter = IntentFilter(filterAction)
         fragment.requireActivity().registerReceiver(_value, intentFilter)
     }
 }
 
 /**
- * Creates an [AutoClearedValue] associated with this fragment.
+ * Creates an [AutoSubscribeReceiver] associated with this fragment.
  */
 fun <T : BroadcastReceiver> Fragment.AutoSubscribeReceiver(filterAction: String) = AutoRegisterReceiver<T>(this,filterAction)
