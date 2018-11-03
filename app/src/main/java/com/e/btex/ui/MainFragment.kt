@@ -26,8 +26,8 @@ import android.Manifest.permission
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.os.Build
-
-
+import com.e.btex.databinding.IncludePairedBarBinding
+import kotlinx.android.synthetic.main.include_paired_bar.view.*
 
 
 class MainFragment : Fragment() {
@@ -35,6 +35,7 @@ class MainFragment : Fragment() {
     private lateinit var binding: FragmentMainBinding
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var deviceAdapter: DeviceAdapter
+    private lateinit var pairedDeviceAdapter: DeviceAdapter
     private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
 
     private var isBluetoothExist: Boolean = false
@@ -83,15 +84,25 @@ class MainFragment : Fragment() {
             showBluetoothVisibleDialog()
         }
 
-        binding.buttonFind.setOnClickListener {
+        binding.buttonDicover.setOnClickListener {
             dicoverDevice()
+        }
+
+        binding.buttonUpdatePaired.setOnClickListener {
+            updatePairedDevices()
         }
 
         deviceAdapter = DeviceAdapter {
             requireActivity().toast(it.name)
         }
 
+
+        pairedDeviceAdapter = DeviceAdapter {
+            requireActivity().toast(it.name)
+        }
+
         binding.deviceRecyclerView.adapter = deviceAdapter
+        binding.pairedDeviceRecyclerView.adapter = pairedDeviceAdapter
 
         return binding.root
     }
@@ -163,6 +174,10 @@ class MainFragment : Fragment() {
 
         })
 
+    }
+
+    private fun updatePairedDevices() {
+        pairedDeviceAdapter.submitList(bluetoothAdapter.bondedDevices.toList())
     }
 
     private fun enableDisableBT() {
