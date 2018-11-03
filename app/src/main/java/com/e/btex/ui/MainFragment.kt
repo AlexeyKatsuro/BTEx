@@ -1,10 +1,10 @@
 package com.e.btex.ui
 
-import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.*
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothDevice.*
+import android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
+import android.bluetooth.BluetoothDevice.ACTION_FOUND
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,12 +22,6 @@ import com.e.btex.utils.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import timber.log.Timber
-import android.Manifest.permission
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
-import android.os.Build
-import com.e.btex.databinding.IncludePairedBarBinding
-import kotlinx.android.synthetic.main.include_paired_bar.view.*
 
 
 class MainFragment : Fragment() {
@@ -54,10 +48,17 @@ class MainFragment : Fragment() {
             return true
         }
 
-    private var onDeviceDiscoveredReceiver by AutoSubscribeReceiver<BluetoothDeviceReceiver>(ACTION_FOUND)
-    private var onStateChangedReceiver by AutoSubscribeReceiver<BluetoothStateReceiver>(ACTION_STATE_CHANGED)
-    private var onScanModeChangedReceiver by AutoSubscribeReceiver<BluetoothScanModeReceiver>(ACTION_SCAN_MODE_CHANGED)
-    private var onBondStateReceiver by AutoSubscribeReceiver<BluetoothBondStateReceiver>(ACTION_BOND_STATE_CHANGED)
+    private var onStateChangedReceiver
+            by AutoSubscribeReceiver<BluetoothStateReceiver>(ACTION_STATE_CHANGED)
+    private var onScanModeChangedReceiver
+            by AutoSubscribeReceiver<BluetoothScanModeReceiver>(ACTION_SCAN_MODE_CHANGED)
+    private var onBondStateReceiver
+            by AutoSubscribeReceiver<BluetoothBondStateReceiver>(ACTION_BOND_STATE_CHANGED)
+    private var onDeviceDiscoveredReceiver
+            by AutoSubscribeReceiver<BluetoothDeviceReceiver>(
+                    ACTION_FOUND,
+                    ACTION_DISCOVERY_STARTED,
+                    ACTION_DISCOVERY_FINISHED)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +85,7 @@ class MainFragment : Fragment() {
             showBluetoothVisibleDialog()
         }
 
-        binding.buttonDicover.setOnClickListener {
+        binding.scanning.buttonDiscovery.setOnClickListener {
             dicoverDevice()
         }
 
@@ -112,45 +113,55 @@ class MainFragment : Fragment() {
 
         onStateChangedReceiver.setOnStateChangedListener(object : BluetoothStateReceiver.OnStateChangedListener {
             override fun onStateOff() {
-                Timber.i("onStateOff:")
+                Timber.i("onStateOff")
             }
 
             override fun onStateOn() {
-                Timber.i("onStateOn:")
+                Timber.i("onStateOn")
             }
 
             override fun onStateTurningOff() {
-                Timber.i("onStateTurningOff:")
+                Timber.i("onStateTurningOff")
             }
 
             override fun onStateTurningOn() {
-                Timber.i("onStateTurningOn:")
+                Timber.i("onStateTurningOn")
             }
 
         })
         onScanModeChangedReceiver.setOnVisibilityChangedListener(object : BluetoothScanModeReceiver.OnScanModeChangedListener {
             override fun onScanModeConnectableDiscoverable() {
-                Timber.i("onScanModeConnectableDiscoverable:")
+                Timber.i("onScanModeConnectableDiscoverable")
             }
 
             override fun onScanModeConnectable() {
-                Timber.i("onScanModeConnectable:")
+                Timber.i("onScanModeConnectable")
             }
 
             override fun onScanModeNone() {
-                Timber.i("onScanModeNone:")
+                Timber.i("onScanModeNone")
             }
 
             override fun onStateConnecting() {
-                Timber.i("onStateConnecting:")
+                Timber.i("onStateConnecting")
             }
 
             override fun onStateConnected() {
-                Timber.i("onStateConnected:")
+                Timber.i("onStateConnected")
             }
 
         })
         onDeviceDiscoveredReceiver.setOnDeviceReceivedListener(object : BluetoothDeviceReceiver.OnDeviceReceivedListener {
+            override fun onStartDiscovery() {
+                Timber.i("onStartDiscovery")
+                binding.isScaning = true
+            }
+
+            override fun onStopDiscovery() {
+                Timber.i("onStopDiscovery")
+                binding.isScaning = false
+            }
+
             override fun onDeviceReceived(device: BluetoothDevice) {
                 Timber.i("onDeviceReceived:")
                 device.showInfoInLog()
@@ -161,15 +172,15 @@ class MainFragment : Fragment() {
         })
         onBondStateReceiver.setOnBondStateListener(object : BluetoothBondStateReceiver.OnBondStateChangedListener {
             override fun onBondBonded(device: BluetoothDevice) {
-                Timber.i("onBondBonded:")
+                Timber.i("onBondBonded")
             }
 
             override fun onBondBonding(device: BluetoothDevice) {
-                Timber.i("onBondBonding:")
+                Timber.i("onBondBonding")
             }
 
             override fun onBondNone(device: BluetoothDevice) {
-                Timber.i("onBondNone:")
+                Timber.i("onBondNone")
             }
 
         })

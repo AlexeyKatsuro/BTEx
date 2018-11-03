@@ -19,7 +19,7 @@ import kotlin.reflect.KProperty
  *
  * Accessing this variable in a destroyed fragment will throw NPE.
  */
-class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val filterAction: String) : ReadWriteProperty<Fragment, T> {
+class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val filterActions: List<String>) : ReadWriteProperty<Fragment, T> {
     private var _value: T? = null
 
     init {
@@ -41,7 +41,10 @@ class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val fi
 
     override fun setValue(thisRef: Fragment, property: KProperty<*>, value: T) {
         _value = value
-        val intentFilter = IntentFilter(filterAction)
+        val intentFilter = IntentFilter()
+        filterActions.forEach {
+            intentFilter.addAction(it)
+        }
         fragment.requireActivity().registerReceiver(_value, intentFilter)
     }
 }
@@ -49,4 +52,5 @@ class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val fi
 /**
  * Creates an [AutoSubscribeReceiver] associated with this fragment.
  */
-fun <T : BroadcastReceiver> Fragment.AutoSubscribeReceiver(filterAction: String) = AutoRegisterReceiver<T>(this,filterAction)
+//fun <T : BroadcastReceiver> Fragment.AutoSubscribeReceiver(filterAction: String) = AutoRegisterReceiver<T>(this, listOf(filterAction))
+fun <T : BroadcastReceiver> Fragment.AutoSubscribeReceiver(vararg filterActions: String) = AutoRegisterReceiver<T>(this, filterActions.asList())
