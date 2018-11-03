@@ -95,6 +95,8 @@ class MainFragment : Fragment() {
 
         deviceAdapter = DeviceAdapter {
             requireActivity().toast(it.name)
+            bluetoothAdapter.cancelDiscovery()
+            it.createBond()
         }
 
 

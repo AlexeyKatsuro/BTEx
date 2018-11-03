@@ -23,7 +23,7 @@ class DeviceAdapter(private val itemCallBack: (BluetoothDevice)->Unit) : DataBou
 
     override fun bind(binding: ItemBluettoothDeciveBinding, item: BluetoothDevice) {
         binding.device = item
-        binding.root.setOnClickListener { itemCallBack }
+        binding.root.setOnClickListener { itemCallBack.invoke(item) }
     }
 
     fun clear(){
