@@ -1,5 +1,6 @@
 package com.e.btex.ui
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.*
 import android.bluetooth.BluetoothDevice
@@ -21,6 +22,12 @@ import com.e.btex.utils.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import timber.log.Timber
+import android.Manifest.permission
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.os.Build
+
+
 
 
 class MainFragment : Fragment() {
@@ -183,14 +190,15 @@ class MainFragment : Fragment() {
     }
 
     private fun dicoverDevice() {
-        if(!isBtStateValid){
+        if (!isBtStateValid) {
             return
         }
 
         if (bluetoothAdapter.isDiscovering) {
             bluetoothAdapter.cancelDiscovery()
         }
-
+        deviceList.clear()
+        deviceAdapter.clear()
         bluetoothAdapter.startDiscovery()
     }
 
@@ -199,6 +207,7 @@ class MainFragment : Fragment() {
         bluetoothAdapter.cancelDiscovery()
         bluetoothAdapter.disable()
     }
+
 }
 
 

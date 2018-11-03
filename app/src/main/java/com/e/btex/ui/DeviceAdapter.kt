@@ -25,4 +25,8 @@ class DeviceAdapter(private val itemCallBack: (BluetoothDevice)->Unit) : DataBou
         binding.device = item
         binding.root.setOnClickListener { itemCallBack }
     }
+
+    fun clear(){
+        submitList(mutableListOf())
+    }
 }
