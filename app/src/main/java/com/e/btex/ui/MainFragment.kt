@@ -39,9 +39,8 @@ class MainFragment : Fragment() {
     private lateinit var deviceAdapter: DeviceAdapter
     private lateinit var pairedDeviceAdapter: DeviceAdapter
     private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
-    private val uuidInsecure = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66")
 
-    private lateinit var bluetoothConnection: BluetoothConnectionService
+    private var bluetoothConnection: BluetoothConnectionService? = null
 
     private var isBluetoothExist: Boolean = false
 
@@ -83,6 +82,9 @@ class MainFragment : Fragment() {
         onScanModeChangedReceiver = BluetoothScanModeReceiver()
         onBondStateReceiver = BluetoothBondStateReceiver()
 
+
+        if(isBtStateValid)
+            ininBlueToothService()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -106,7 +108,8 @@ class MainFragment : Fragment() {
 
         binding.buttonSend.setOnClickListener {
             val bytes =  binding.messageText.getText().toString().toByteArray(Charset.defaultCharset())
-            bluetoothConnection.write(bytes)
+            bluetoothConnection?.write(bytes)
+            binding.messageText.setText("")
         }
 
         deviceAdapter = DeviceAdapter {
@@ -119,7 +122,7 @@ class MainFragment : Fragment() {
         pairedDeviceAdapter = DeviceAdapter {
             //requireActivity().toast(it.name)
 
-            bluetoothConnection.startClient(Bdevice,uuidInsecure)
+            bluetoothConnection?.startClient(it)
         }
 
         binding.deviceRecyclerView.adapter = deviceAdapter
@@ -140,6 +143,8 @@ class MainFragment : Fragment() {
 
             override fun onStateOn() {
                 Timber.i("onStateOn")
+                if(bluetoothConnection == null)
+                    ininBlueToothService()
             }
 
             override fun onStateTurningOff() {
@@ -195,15 +200,6 @@ class MainFragment : Fragment() {
         onBondStateReceiver.setOnBondStateListener(object : BluetoothBondStateReceiver.OnBondStateChangedListener {
             override fun onBondBonded(device: BluetoothDevice) {
                 Timber.i("onBondBonded")
-                Bdevice = device
-
-                bluetoothConnection = BluetoothConnectionService(requireContext(),bluetoothAdapter,Handler()).apply {
-                    setOnDataRecieveListener { buffer, bytes ->
-                        val incomingMessage = String(buffer, 0, bytes)
-                        Toast.makeText(requireContext(),incomingMessage,Toast.LENGTH_SHORT).show()
-                    }
-                    start()
-                }
             }
 
             override fun onBondBonding(device: BluetoothDevice) {
@@ -216,6 +212,16 @@ class MainFragment : Fragment() {
 
         })
 
+    }
+
+    fun ininBlueToothService() {
+        bluetoothConnection = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
+            setOnDataRecieveListener { buffer, bytes ->
+                val incomingMessage = String(buffer, 0, bytes)
+                Toast.makeText(requireContext(), incomingMessage, Toast.LENGTH_SHORT).show()
+            }
+            start()
+        }
     }
 
     private fun updatePairedDevices() {
