@@ -23,7 +23,7 @@
             android:text="ON/OFF"
             app:layout_constraintEnd_toStartOf="@+id/button_visibility"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/message_text" />
 
         <Button
             android:id="@+id/button_visibility"
@@ -71,8 +71,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            tools:itemCount="3"
             app:layout_constraintTop_toBottomOf="@+id/textView"
+            tools:itemCount="3"
             tools:listitem="@layout/item_bluettooth_decive" />
 
         <View
@@ -100,19 +100,16 @@
             app:layout_constraintTop_toBottomOf="@+id/view" />
 
 
-        <include layout="@layout/include_scan_indication"
+        <include
             android:id="@+id/scanning"
+            layout="@layout/include_scan_indication"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:isScaning="@{isScaning}"
             android:layout_marginStart="@dimen/spacing_mini"
+            app:isScaning="@{isScaning}"
             app:layout_constraintBottom_toBottomOf="@+id/textView2"
             app:layout_constraintStart_toEndOf="@+id/textView2"
-            app:layout_constraintTop_toTopOf="@+id/textView2"
-            />
-
-
-
+            app:layout_constraintTop_toTopOf="@+id/textView2" />
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -124,7 +121,29 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textView2"
-            tools:listitem="@layout/item_bluettooth_decive"
-            tools:itemCount="3"/>
+            tools:itemCount="3"
+            tools:listitem="@layout/item_bluettooth_decive" />
+
+        <EditText
+            android:id="@+id/message_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toStartOf="@+id/button_send"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/button_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/message_text"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:drawable/ic_menu_send" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

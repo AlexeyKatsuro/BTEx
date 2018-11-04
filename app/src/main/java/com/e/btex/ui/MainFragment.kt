@@ -7,9 +7,11 @@ import android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
 import android.bluetooth.BluetoothDevice.ACTION_FOUND
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.e.btex.R
 import com.e.btex.broadcastReceivers.BluetoothBondStateReceiver
@@ -22,6 +24,12 @@ import com.e.btex.utils.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import timber.log.Timber
+import com.e.btex.connection.BluetoothConnectionService
+import java.nio.charset.Charset
+import java.util.*
+import java.nio.charset.Charset.defaultCharset
+
+
 
 
 class MainFragment : Fragment() {
@@ -31,6 +39,9 @@ class MainFragment : Fragment() {
     private lateinit var deviceAdapter: DeviceAdapter
     private lateinit var pairedDeviceAdapter: DeviceAdapter
     private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
+    private val uuidInsecure = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66")
+
+    private lateinit var bluetoothConnection: BluetoothConnectionService
 
     private var isBluetoothExist: Boolean = false
 
@@ -93,15 +104,22 @@ class MainFragment : Fragment() {
             updatePairedDevices()
         }
 
+        binding.buttonSend.setOnClickListener {
+            val bytes =  binding.messageText.getText().toString().toByteArray(Charset.defaultCharset())
+            bluetoothConnection.write(bytes)
+        }
+
         deviceAdapter = DeviceAdapter {
-            requireActivity().toast(it.name)
+            requireActivity().toast(it?.name?:"")
             bluetoothAdapter.cancelDiscovery()
             it.createBond()
         }
 
 
         pairedDeviceAdapter = DeviceAdapter {
-            requireActivity().toast(it.name)
+            //requireActivity().toast(it.name)
+
+            bluetoothConnection.startClient(Bdevice,uuidInsecure)
         }
 
         binding.deviceRecyclerView.adapter = deviceAdapter
@@ -109,6 +127,8 @@ class MainFragment : Fragment() {
 
         return binding.root
     }
+
+    private lateinit var Bdevice: BluetoothDevice
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -175,6 +195,15 @@ class MainFragment : Fragment() {
         onBondStateReceiver.setOnBondStateListener(object : BluetoothBondStateReceiver.OnBondStateChangedListener {
             override fun onBondBonded(device: BluetoothDevice) {
                 Timber.i("onBondBonded")
+                Bdevice = device
+
+                bluetoothConnection = BluetoothConnectionService(requireContext(),bluetoothAdapter,Handler()).apply {
+                    setOnDataRecieveListener { buffer, bytes ->
+                        val incomingMessage = String(buffer, 0, bytes)
+                        Toast.makeText(requireContext(),incomingMessage,Toast.LENGTH_SHORT).show()
+                    }
+                    start()
+                }
             }
 
             override fun onBondBonding(device: BluetoothDevice) {
