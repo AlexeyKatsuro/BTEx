@@ -31,8 +31,9 @@ class ConnectedThread(private val socket: BluetoothSocket,
             // Read from the InputStream
             try {
                 bytes = inputStream!!.read(buffer)
-                val incomingMessage = String(buffer, 0, bytes)
-                Timber.i("InputStream: $incomingMessage")
+
+                Timber.i("Read from the InputStream: $bytes Bytes")
+
                 handler.post {
                     inputCallback?.invoke(buffer,bytes)
                 }

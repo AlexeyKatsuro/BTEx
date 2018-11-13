@@ -1,4 +1,4 @@
-package com.e.btex.utils
+package com.e.btex.utils.extensions
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.*

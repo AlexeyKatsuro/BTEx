@@ -20,16 +20,13 @@ import com.e.btex.broadcastReceivers.BluetoothScanModeReceiver
 import com.e.btex.broadcastReceivers.BluetoothStateReceiver
 import com.e.btex.databinding.FragmentMainBinding
 import com.e.btex.utils.AutoSubscribeReceiver
-import com.e.btex.utils.showInfoInLog
+import com.e.btex.utils.extensions.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import timber.log.Timber
 import com.e.btex.connection.BluetoothConnectionService
+import com.e.btex.data.StatusResponse
 import java.nio.charset.Charset
-import java.util.*
-import java.nio.charset.Charset.defaultCharset
-
-
 
 
 class MainFragment : Fragment() {
@@ -217,8 +214,10 @@ class MainFragment : Fragment() {
     fun ininBlueToothService() {
         bluetoothConnection = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
             setOnDataRecieveListener { buffer, bytes ->
-                val incomingMessage = String(buffer, 0, bytes)
-                Toast.makeText(requireContext(), incomingMessage, Toast.LENGTH_SHORT).show()
+
+                val statusResponse = StatusResponse(buffer)
+                Timber.i("Status response: $statusResponse")
+
             }
             start()
         }
