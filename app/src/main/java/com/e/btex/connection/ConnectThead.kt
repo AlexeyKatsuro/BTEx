@@ -15,6 +15,18 @@ class ConnectThread(private val device: BluetoothDevice,
     private lateinit var socket: BluetoothSocket
 
 
+    @Throws(IOException::class)
+    private fun createBluetoothSocket(device: BluetoothDevice): BluetoothSocket? {
+        try {
+            val m = device.javaClass.getMethod("createInsecureRfcommSocketToServiceRecord", UUID::class.java)
+            return m.invoke(device, uuid) as BluetoothSocket
+        } catch (e: Exception) {
+            Timber.e(e, "Could not create Insecure RFComm Connection ${e.message}")
+        }
+
+        return device.createRfcommSocketToServiceRecord(uuid)
+    }
+
     override fun run() {
         Timber.i("ConnectThread: started.")
 
@@ -22,7 +34,7 @@ class ConnectThread(private val device: BluetoothDevice,
         // given BluetoothDevice
         try {
             Timber.i("ConnectThread: Trying to create InsecureRfcommSocket using UUID: $uuid")
-            socket = device.createRfcommSocketToServiceRecord(uuid)?: throw  IOException("socket is NULL")
+            socket = createBluetoothSocket(device)?: throw  IOException("socket is NULL")
         } catch (e: IOException) {
             Timber.e(e, "ConnectThread: Could not create InsecureRfcommSocket ${e.message}")
         }
@@ -40,9 +52,10 @@ class ConnectThread(private val device: BluetoothDevice,
             Timber.i("run: ConnectThread connected.")
         } catch (e: IOException) {
             // Close the socket
+            Timber.e(e, "run: ConnectThread connecting is Failed")
             try {
                 socket.close()
-                Timber.i("run: Closed Socket.")
+                Timber.e("run: Closed Socket.")
             } catch (e1: IOException) {
                 Timber.e(e, "mConnectThread: run: Unable to close connection in socket ${e1.message}")
             }

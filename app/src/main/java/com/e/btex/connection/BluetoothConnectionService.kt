@@ -15,7 +15,7 @@ import kotlin.properties.Delegates
 class BluetoothConnectionService(private val context: Context,private val bluetoothAdapter: BluetoothAdapter, private val handler: Handler) {
 
     private val appName = context.getString(R.string.app_name)
-    private val uuidInsecure = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66")
+    private val uuidInsecure = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66")
 
     private var mInsecureAcceptThread: AcceptThread? = null
 
