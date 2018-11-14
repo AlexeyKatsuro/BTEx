@@ -4,8 +4,6 @@ import android.bluetooth.BluetoothSocket
 import android.os.Handler
 import timber.log.Timber
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import java.nio.charset.Charset
 
 /**
@@ -27,16 +25,40 @@ class ConnectedThread(private val socket: BluetoothSocket,
         var bytes: Int // bytes returned from read()
 
         // Keep listening to the InputStream until an exception occurs
+
+        var byteReceived = 0
+        val byteList = mutableListOf<Byte>()
+        var isData = false
+
         while (true) {
             // Read from the InputStream
             try {
                 bytes = inputStream!!.read(buffer)
-
                 Timber.i("Read from the InputStream: $bytes Bytes")
 
-                handler.post {
-                    inputCallback?.invoke(buffer,bytes)
+
+                if(buffer.sliceArray(0 until 2).contentEquals(byteArrayOf(222.toByte(),175.toByte()))){
+                    Timber.i("Read Status signature")
+                    isData = true
+                    byteReceived = 0
+                    byteList.clear()
                 }
+
+                if (isData){
+                    Timber.i("Read Status Data: ${bytes} Bytes")
+                    byteList.addAll(buffer.slice(0 until bytes))
+                     byteReceived+=bytes
+
+                    if (byteReceived == 23){
+                        Timber.i("All status data was received: ${byteList.size} Bytes")
+                        handler.post {
+                            inputCallback?.invoke(byteList.toByteArray(),byteReceived)
+                        }
+                        isData = false
+                    }
+                }
+
+
             } catch (e: IOException) {
                 Timber.e(e, "write: Error reading Input Stream.  + ${e.message}")
                 break
