@@ -3,7 +3,10 @@ package com.e.btex.utils.extensions
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.*
 import android.bluetooth.BluetoothDevice
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import timber.log.Timber
+import java.util.*
 
 
 val BluetoothAdapter.stateString: String
@@ -37,3 +40,9 @@ get() {
 fun BluetoothDevice.showInfoInLog() {
     Timber.i("name = $name, address = $address")
 }
+
+fun IntRange.random() =
+        Random().nextInt((endInclusive + 1) - start) +  start
+
+val Fragment.actionBar
+    get() = (requireActivity() as AppCompatActivity).supportActionBar!!

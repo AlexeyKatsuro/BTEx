@@ -1,5 +1,6 @@
 package com.e.btex.ui
 
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.*
 import android.bluetooth.BluetoothDevice
@@ -11,27 +12,32 @@ import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.e.btex.R
 import com.e.btex.broadcastReceivers.BluetoothBondStateReceiver
 import com.e.btex.broadcastReceivers.BluetoothDeviceReceiver
 import com.e.btex.broadcastReceivers.BluetoothScanModeReceiver
 import com.e.btex.broadcastReceivers.BluetoothStateReceiver
-import com.e.btex.databinding.FragmentMainBinding
+import com.e.btex.connection.BluetoothConnectionService
+import com.e.btex.data.StatusResponse
+import com.e.btex.databinding.FragmentSettingBinding
 import com.e.btex.utils.AutoSubscribeReceiver
 import com.e.btex.utils.extensions.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import timber.log.Timber
-import com.e.btex.connection.BluetoothConnectionService
-import com.e.btex.data.StatusResponse
-import java.nio.charset.Charset
+import kotlin.properties.Delegates
 
 
-class MainFragment : Fragment() {
+class SettingFragment : Fragment() {
 
-    private lateinit var binding: FragmentMainBinding
+
+    companion object {
+        private const val REQUEST_BT = 11
+    }
+
+    private lateinit var binding: FragmentSettingBinding
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var deviceAdapter: DeviceAdapter
     private lateinit var pairedDeviceAdapter: DeviceAdapter
@@ -40,6 +46,12 @@ class MainFragment : Fragment() {
     private var bluetoothConnection: BluetoothConnectionService? = null
 
     private var isBluetoothExist: Boolean = false
+
+    private var isBTEnabled by Delegates.observable(false) { _, old, new ->
+        binding.appBar.btSwitch.isChecked = new
+    }
+
+    var isAutoTurn = false
 
     val isBtStateValid: Boolean
         get() {
@@ -69,6 +81,7 @@ class MainFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
         isBluetoothExist = getDefaultAdapter()?.let {
             bluetoothAdapter = it
             true
@@ -85,7 +98,17 @@ class MainFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentMainBinding.inflate(inflater, container, false)
+        binding = FragmentSettingBinding.inflate(inflater, container, false)
+
+        isBTEnabled = bluetoothAdapter.isEnabled
+
+        binding.appBar.btSwitch.setOnCheckedChangeListener{ _ , _ ->
+            if(!isAutoTurn) {
+                enableDisableBT()
+            } else{
+                isAutoTurn = false
+            }
+        }
 
         binding.buttonOnOff.setOnClickListener {
             enableDisableBT()
@@ -103,27 +126,26 @@ class MainFragment : Fragment() {
             updatePairedDevices()
         }
 
-        binding.buttonSend.setOnClickListener {
-            val bytes =  binding.messageText.getText().toString().toByteArray(Charset.defaultCharset())
-            bluetoothConnection?.write(bytes)
-            binding.messageText.setText("")
-        }
 
         deviceAdapter = DeviceAdapter {
-            requireActivity().toast(it?.name?:"")
-            bluetoothAdapter.cancelDiscovery()
-            it.createBond()
+            if(isBtStateValid) {
+                requireActivity().toast(it?.name ?: "")
+                bluetoothAdapter.cancelDiscovery()
+                it.createBond()
+            }
         }
 
 
         pairedDeviceAdapter = DeviceAdapter {
-            //requireActivity().toast(it.name)
-
-            bluetoothConnection?.startClient(it)
+            if(isBtStateValid) {
+                bluetoothConnection?.startClient(it)
+            }
         }
 
         binding.deviceRecyclerView.adapter = deviceAdapter
         binding.pairedDeviceRecyclerView.adapter = pairedDeviceAdapter
+
+        updatePairedDevices()
 
         return binding.root
     }
@@ -133,23 +155,38 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.appBar.toolBar.apply {
+            setNavigationOnClickListener {
+                findNavController().navigateUp()
+            }
+        }
+
         onStateChangedReceiver.setOnStateChangedListener(object : BluetoothStateReceiver.OnStateChangedListener {
             override fun onStateOff() {
                 Timber.i("onStateOff")
+                binding.appBar.btSwitch.isEnabled = true
+                isAutoTurn = true
+                isBTEnabled = false
             }
 
             override fun onStateOn() {
                 Timber.i("onStateOn")
+                binding.appBar.btSwitch.isEnabled = true
+                isAutoTurn = true
+                isBTEnabled = true
+
                 if(bluetoothConnection == null)
                     ininBlueToothService()
             }
 
             override fun onStateTurningOff() {
                 Timber.i("onStateTurningOff")
+                binding.appBar.btSwitch.isEnabled = false
             }
 
             override fun onStateTurningOn() {
                 Timber.i("onStateTurningOn")
+                binding.appBar.btSwitch.isEnabled = false
             }
 
         })
@@ -211,6 +248,7 @@ class MainFragment : Fragment() {
 
     }
 
+
     fun ininBlueToothService() {
         bluetoothConnection = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
             setOnDataRecieveListener { buffer, bytes ->
@@ -219,16 +257,21 @@ class MainFragment : Fragment() {
                 Timber.i("Status response: $statusResponse")
 
             }
-            start()
+            //start()
         }
     }
 
     private fun updatePairedDevices() {
+        if (!isBtStateValid) {
+            return
+        }
+
         pairedDeviceAdapter.submitList(bluetoothAdapter.bondedDevices.toList())
     }
 
     private fun enableDisableBT() {
         if (!bluetoothAdapter.isEnabled) {
+            binding.appBar.btSwitch.isEnabled = false
             showBluetoothEnableDialog()
         } else {
             bluetoothAdapter.disable()
@@ -239,7 +282,7 @@ class MainFragment : Fragment() {
 
     private fun showBluetoothEnableDialog() {
         val enableBtIntent = Intent(ACTION_REQUEST_ENABLE)
-        startActivity(enableBtIntent)
+        startActivityForResult(enableBtIntent, REQUEST_BT)
 
     }
 
@@ -267,7 +310,16 @@ class MainFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         bluetoothAdapter.cancelDiscovery()
-        bluetoothAdapter.disable()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if(requestCode == REQUEST_BT){
+            if (resultCode!=Activity.RESULT_OK) {
+                isAutoTurn = true
+                isBTEnabled = false
+                binding.appBar.btSwitch.isEnabled = true
+            }
+        }
     }
 
 }

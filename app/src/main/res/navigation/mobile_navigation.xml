@@ -3,12 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/mainFragment">
+    app:startDestination="@id/graphFragment">
 
     <fragment
-        android:id="@+id/mainFragment"
-        android:name="com.e.btex.ui.MainFragment"
+        android:id="@+id/graphFragment"
+        android:name="com.e.btex.ui.GraphFragment"
+        android:label="GraphFragment"
+        tools:layout="@layout/fragment_graph">
+        <action
+            android:id="@+id/showSettingFragment"
+            app:destination="@id/settingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingFragment"
+        android:name="com.e.btex.ui.SettingFragment"
         android:label="MainFragment"
-        tools:layout="@layout/fragment_main"
+        tools:layout="@layout/fragment_setting"
         />
 </navigation>
