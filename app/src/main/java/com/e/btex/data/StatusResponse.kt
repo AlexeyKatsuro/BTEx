@@ -18,5 +18,4 @@ data class StatusResponse(val byteArray: ByteArray,
                           val pm25: Short = byteArray.sliceArray(17..18).toShort(),
                           val pm10: Short = byteArray.sliceArray(19..20).toShort(),
                           val tvoc: Short = byteArray.sliceArray(21..22).toShort()
-
-    )
+)

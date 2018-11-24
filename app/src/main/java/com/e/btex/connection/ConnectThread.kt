@@ -3,6 +3,8 @@ package com.e.btex.connection
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.os.Handler
+import com.e.btex.ui.common.BtConnectionListener
 import timber.log.Timber
 import java.io.IOException
 import java.util.*
@@ -10,6 +12,8 @@ import java.util.*
 class ConnectThread(private val device: BluetoothDevice,
                     private  val uuid: UUID,
                     private val bluetoothAdapter: BluetoothAdapter,
+                    private val handler: Handler,
+                    private val listner: BtConnectionListener?,
                     private val onConneted: (BluetoothSocket)->Unit) : Thread() {
 
     private lateinit var socket: BluetoothSocket
@@ -29,7 +33,9 @@ class ConnectThread(private val device: BluetoothDevice,
 
     override fun run() {
         Timber.i("ConnectThread: started.")
-
+        handler.post {
+            listner?.onStartConnecting()
+        }
         // Get a BluetoothSocket for a connection with the
         // given BluetoothDevice
         try {
@@ -48,23 +54,18 @@ class ConnectThread(private val device: BluetoothDevice,
             // This is a blocking call and will only return on a
             // successful connection or an exception
             socket.connect()
-
             Timber.i("run: ConnectThread connected.")
+            onConneted(socket)
         } catch (e: IOException) {
             // Close the socket
             Timber.e(e, "run: ConnectThread connecting is Failed")
-            try {
-                socket.close()
-                Timber.e("run: Closed Socket.")
-            } catch (e1: IOException) {
-                Timber.e(e, "mConnectThread: run: Unable to close connection in socket ${e1.message}")
+            cancel()
+            handler.post {
+                listner?.onFailedConnecting()
             }
 
             Timber.i("run: ConnectThread: Could not connect to UUID: $uuid")
         }
-
-
-        onConneted(socket)
     }
 
 

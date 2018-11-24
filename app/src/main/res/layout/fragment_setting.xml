@@ -5,9 +5,13 @@
 
     <data>
 
+        <import type="android.view.View" />
         <variable
             name="isScaning"
             type="Boolean" />
+        <variable
+            name="isConnecting"
+            type="Boolean"/>
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -146,5 +150,18 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
+
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="@{isConnecting ? View.VISIBLE : View.GONE }"
+            android:background="@drawable/locked_bg">
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
+        </FrameLayout>
+
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

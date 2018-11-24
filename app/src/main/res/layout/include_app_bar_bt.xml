@@ -20,6 +20,7 @@
             android:id="@+id/toolBar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
             app:contentInsetRight="@dimen/margin_normal"
             app:navigationIcon="@{icon}"
             app:title="Bluetooth">
@@ -39,7 +40,7 @@
 
                 <Switch
                     android:id="@+id/bt_switch"
-
+                    android:theme="@style/SwitchTheme"
                     android:layout_gravity="end|center_vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />

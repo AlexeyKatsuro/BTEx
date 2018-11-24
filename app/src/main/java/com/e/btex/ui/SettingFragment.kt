@@ -12,6 +12,7 @@ import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.e.btex.R
@@ -22,6 +23,7 @@ import com.e.btex.broadcastReceivers.BluetoothStateReceiver
 import com.e.btex.connection.BluetoothConnectionService
 import com.e.btex.data.StatusResponse
 import com.e.btex.databinding.FragmentSettingBinding
+import com.e.btex.ui.common.BtConnectionListener
 import com.e.btex.utils.AutoSubscribeReceiver
 import com.e.btex.utils.extensions.showInfoInLog
 import org.jetbrains.anko.longToast
@@ -94,7 +96,7 @@ class SettingFragment : Fragment() {
 
 
         if(isBtStateValid)
-            ininBlueToothService()
+            initBlueToothService()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -176,7 +178,7 @@ class SettingFragment : Fragment() {
                 isBTEnabled = true
 
                 if(bluetoothConnection == null)
-                    ininBlueToothService()
+                    initBlueToothService()
             }
 
             override fun onStateTurningOff() {
@@ -249,14 +251,38 @@ class SettingFragment : Fragment() {
     }
 
 
-    fun ininBlueToothService() {
+    fun initBlueToothService() {
         bluetoothConnection = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
-            setOnDataRecieveListener { buffer, bytes ->
 
-                val statusResponse = StatusResponse(buffer)
-                Timber.i("Status response: $statusResponse")
+            setBTConnectionListener(object : BtConnectionListener{
+                override fun onStartConnecting() {
+                    binding.isConnecting = true
+                    binding.executePendingBindings()
+                }
 
-            }
+                override fun onFailedConnecting() {
+                    binding.isConnecting = false
+                    binding.executePendingBindings()
+                    Toast.makeText(requireContext(),"Connection failed",Toast.LENGTH_SHORT).show()                }
+
+                override fun onCreateConnection() {
+                    binding.isConnecting = false
+                    binding.executePendingBindings()
+                    Toast.makeText(requireContext(),"Connected",Toast.LENGTH_SHORT).show()
+
+                }
+
+                override fun onDestroyConnection() {
+                    Toast.makeText(requireContext(),"Disconnected",Toast.LENGTH_SHORT).show()
+                }
+
+                override fun onReceiveData(bytes: ByteArray, size: Int) {
+                    val statusResponse = StatusResponse(bytes)
+                    Timber.i("Status response: $statusResponse")
+                }
+
+            })
+
             //start()
         }
     }

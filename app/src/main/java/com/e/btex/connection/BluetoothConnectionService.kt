@@ -9,6 +9,7 @@ import timber.log.Timber
 import android.bluetooth.BluetoothDevice
 import android.app.ProgressDialog
 import android.os.Handler
+import com.e.btex.ui.common.BtConnectionListener
 import kotlin.properties.Delegates
 
 
@@ -26,14 +27,6 @@ class BluetoothConnectionService(private val context: Context,private val blueto
     private var mConnectedThread: ConnectedThread? by Delegates.observable<ConnectedThread?>(null){
         _, old, new ->
         old?.cancel()
-    }
-    private var inputCallback: ((ByteArray, Int) -> Unit)? = null
-
-
-
-
-    fun setOnDataRecieveListener(callback: (ByteArray, Int) -> Unit){
-        inputCallback = callback
     }
 
     /**
@@ -65,7 +58,7 @@ class BluetoothConnectionService(private val context: Context,private val blueto
 
         //initprogress dialog
 
-        mConnectThread = ConnectThread(device, uuidInsecure, bluetoothAdapter){
+        mConnectThread = ConnectThread(device, uuidInsecure, bluetoothAdapter, handler, btConnectionListener){
             connected(it)
         }
         mConnectThread?.start()
@@ -76,25 +69,13 @@ class BluetoothConnectionService(private val context: Context,private val blueto
         Timber.i("connected: Starting.")
 
         // Start the thread to manage the connection and perform transmissions
-        mConnectedThread = ConnectedThread(socket,handler,inputCallback)
+        mConnectedThread = ConnectedThread(socket,handler,btConnectionListener)
         mConnectedThread?.start()
     }
 
-    /**
-     * Write to the ConnectedThread in an unsynchronized manner
-     *
-     * @param out The bytes to write
-     * @see ConnectedThread.write
-     */
-    fun write(out: ByteArray) {
-        // Synchronize a copy of the ConnectedThread
-        Timber.i("write: Write Called.")
-        //perform the write
-        mConnectedThread?.write(out)
+    fun setBTConnectionListener(listner: BtConnectionListener){
+        btConnectionListener = listner
     }
 
-
-
-
-
+    var btConnectionListener: BtConnectionListener? = null
 }

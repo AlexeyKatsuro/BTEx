@@ -3,4 +3,31 @@
     <string name="bt_not_capabilities">Does not BT capabilities</string>
     <string name="bt_not_active">Bluetooth\nnot active</string>
     <string name="setting">Настройки</string>
+
+    <string name="temperature">Temperature</string>
+    <string name="humidity">Humidity</string>
+    <string name="co2">co2</string>
+    <string name="pm1">pm1</string>
+    <string name="pm10">pm10</string>
+    <string name="pm25">pm25</string>
+    <string name="tvoc">tvoc</string>
+
+    <string name="temperature_val">Temperature: %1$s</string>
+    <string name="humidity_val">Humidity: %1$s</string>
+    <string name="co2_val">co2: %1$s</string>
+    <string name="pm1_val">pm1: %1$s</string>
+    <string name="pm10_val">pm10: %1$s</string>
+    <string name="pm25_val">pm25: %1$s</string>
+    <string name="tvoc_val">tvoc: %1$s</string>
+    
+    <string-array name="indications">
+        <item>@string/temperature</item>
+        <item>@string/humidity</item>
+        <item>@string/co2</item>
+        <item>@string/pm1</item>
+        <item>@string/pm10</item>
+        <item>@string/pm25</item>
+        <item>@string/tvoc</item>
+    </string-array>
+
 </resources>

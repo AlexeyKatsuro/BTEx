@@ -2,6 +2,7 @@ package com.e.btex.connection
 
 import android.bluetooth.BluetoothSocket
 import android.os.Handler
+import com.e.btex.ui.common.BtConnectionListener
 import timber.log.Timber
 import java.io.IOException
 import java.nio.charset.Charset
@@ -12,7 +13,7 @@ import java.nio.charset.Charset
  */
 class ConnectedThread(private val socket: BluetoothSocket,
                       private val handler: Handler,
-                      private val inputCallback: ((ByteArray, Int) -> Unit)? ) : Thread() {
+                      private val listner: BtConnectionListener?) : Thread() {
 
     private val inputStream = socket.inputStream
     private var outStream = socket.outputStream
@@ -20,6 +21,10 @@ class ConnectedThread(private val socket: BluetoothSocket,
     override fun run() {
 
         Timber.i("ConnectedThread: Starting.")
+        handler.post {
+            listner?.onCreateConnection()
+        }
+
         val buffer = ByteArray(1024)  // buffer store for the stream
 
         var bytes: Int // bytes returned from read()
@@ -52,7 +57,7 @@ class ConnectedThread(private val socket: BluetoothSocket,
                     if (byteReceived == 23){
                         Timber.i("All status data was received: ${byteList.size} Bytes")
                         handler.post {
-                            inputCallback?.invoke(byteList.toByteArray(),byteReceived)
+                            listner?.onReceiveData(byteList.toByteArray(),byteReceived)
                         }
                         isData = false
                     }
@@ -61,23 +66,16 @@ class ConnectedThread(private val socket: BluetoothSocket,
 
             } catch (e: IOException) {
                 Timber.e(e, "write: Error reading Input Stream.  + ${e.message}")
+                cancel()
+                handler.post {
+                    listner?.onDestroyConnection()
+                }
                 break
             }
 
         }
     }
 
-    //Call this from the main activity to send data to the remote device
-    fun write(bytes: ByteArray) {
-        val text = String(bytes, Charset.defaultCharset())
-        Timber.i("write: Writing to outputstream: $text")
-        try {
-            outStream!!.write(bytes)
-        } catch (e: IOException) {
-            Timber.e(e, "write: Error writing to output stream. ${e.message}")
-        }
-
-    }
 
     /* Call this from the main activity to shutdown the connection */
     fun cancel() {
