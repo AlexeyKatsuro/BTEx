@@ -20,7 +20,7 @@
     android:layout_height="match_parent">
 
     <com.androidplot.xy.XYPlot
-        android:id="@+id/dynamicXYPlot"
+        android:id="@+id/plot"
         style="@style/APDefacto.Light"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

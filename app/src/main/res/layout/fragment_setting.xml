@@ -156,7 +156,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="@{isConnecting ? View.VISIBLE : View.GONE }"
-            android:background="@drawable/locked_bg">
+            android:background="#4A000000">
             <ProgressBar
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

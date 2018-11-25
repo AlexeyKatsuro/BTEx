@@ -25,6 +25,7 @@ import com.e.btex.data.StatusResponse
 import com.e.btex.databinding.FragmentSettingBinding
 import com.e.btex.ui.common.BtConnectionListener
 import com.e.btex.utils.AutoSubscribeReceiver
+import com.e.btex.utils.extensions.setLockedScreen
 import com.e.btex.utils.extensions.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
@@ -256,16 +257,19 @@ class SettingFragment : Fragment() {
 
             setBTConnectionListener(object : BtConnectionListener{
                 override fun onStartConnecting() {
+                    setLockedScreen(true)
                     binding.isConnecting = true
                     binding.executePendingBindings()
                 }
 
                 override fun onFailedConnecting() {
+                    setLockedScreen(false)
                     binding.isConnecting = false
                     binding.executePendingBindings()
                     Toast.makeText(requireContext(),"Connection failed",Toast.LENGTH_SHORT).show()                }
 
                 override fun onCreateConnection() {
+                    setLockedScreen(false)
                     binding.isConnecting = false
                     binding.executePendingBindings()
                     Toast.makeText(requireContext(),"Connected",Toast.LENGTH_SHORT).show()

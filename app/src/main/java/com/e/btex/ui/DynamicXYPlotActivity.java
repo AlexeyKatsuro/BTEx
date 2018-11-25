@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
-import java.util.Timer;
-
-import timber.log.Timber;
 
 public class DynamicXYPlotActivity extends Activity {
 
@@ -66,7 +63,7 @@ public class DynamicXYPlotActivity extends Activity {
         setContentView(R.layout.dynamic_xyplot_example);
 
         // get handles to our View defined in layout.xml:
-        dynamicPlot = (XYPlot) findViewById(R.id.dynamicXYPlot);
+        dynamicPlot = (XYPlot) findViewById(R.id.plot);
 
         plotUpdater = new MyPlotUpdater(dynamicPlot);
 
