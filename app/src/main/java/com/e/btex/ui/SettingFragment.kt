@@ -6,9 +6,13 @@ import android.bluetooth.BluetoothAdapter.*
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
 import android.bluetooth.BluetoothDevice.ACTION_FOUND
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.Handler
+import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +25,7 @@ import com.e.btex.broadcastReceivers.BluetoothDeviceReceiver
 import com.e.btex.broadcastReceivers.BluetoothScanModeReceiver
 import com.e.btex.broadcastReceivers.BluetoothStateReceiver
 import com.e.btex.connection.BluetoothConnectionService
+import com.e.btex.connection.MyService
 import com.e.btex.data.StatusResponse
 import com.e.btex.databinding.FragmentSettingBinding
 import com.e.btex.ui.common.BtConnectionListener
@@ -46,7 +51,8 @@ class SettingFragment : Fragment() {
     private lateinit var pairedDeviceAdapter: DeviceAdapter
     private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
 
-    private var bluetoothConnection: BluetoothConnectionService? = null
+    //private var bluetoothConnection: BluetoothConnectionService? = null
+    private var service: MyService? = null
 
     private var isBluetoothExist: Boolean = false
 
@@ -141,7 +147,8 @@ class SettingFragment : Fragment() {
 
         pairedDeviceAdapter = DeviceAdapter {
             if(isBtStateValid) {
-                bluetoothConnection?.startClient(it)
+               // bluetoothConnection?.startClient(it)
+                service?.startClient(it)
             }
         }
 
@@ -178,7 +185,7 @@ class SettingFragment : Fragment() {
                 isAutoTurn = true
                 isBTEnabled = true
 
-                if(bluetoothConnection == null)
+                if(service == null)
                     initBlueToothService()
             }
 
@@ -253,42 +260,11 @@ class SettingFragment : Fragment() {
 
 
     fun initBlueToothService() {
-        bluetoothConnection = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
 
-            setBTConnectionListener(object : BtConnectionListener{
-                override fun onStartConnecting() {
-                    setLockedScreen(true)
-                    binding.isConnecting = true
-                    binding.executePendingBindings()
-                }
+        val intent = Intent(requireContext(), MyService::class.java)
+        requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
 
-                override fun onFailedConnecting() {
-                    setLockedScreen(false)
-                    binding.isConnecting = false
-                    binding.executePendingBindings()
-                    Toast.makeText(requireContext(),"Connection failed",Toast.LENGTH_SHORT).show()                }
 
-                override fun onCreateConnection() {
-                    setLockedScreen(false)
-                    binding.isConnecting = false
-                    binding.executePendingBindings()
-                    Toast.makeText(requireContext(),"Connected",Toast.LENGTH_SHORT).show()
-
-                }
-
-                override fun onDestroyConnection() {
-                    Toast.makeText(requireContext(),"Disconnected",Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onReceiveData(bytes: ByteArray, size: Int) {
-                    val statusResponse = StatusResponse(bytes)
-                    Timber.i("Status response: $statusResponse")
-                }
-
-            })
-
-            //start()
-        }
     }
 
     private fun updatePairedDevices() {
@@ -350,6 +326,54 @@ class SettingFragment : Fragment() {
                 binding.appBar.btSwitch.isEnabled = true
             }
         }
+    }
+
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+        }
+
+        override fun onServiceConnected(name: ComponentName?, iBinder: IBinder) {
+
+            service = (iBinder as MyService.LocalBinder).service
+            service?.bluetoothConnectionService = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
+
+                setBTConnectionListener(object : BtConnectionListener{
+                    override fun onStartConnecting() {
+                        setLockedScreen(true)
+                        binding.isConnecting = true
+                        binding.executePendingBindings()
+                    }
+
+                    override fun onFailedConnecting() {
+                        setLockedScreen(false)
+                        binding.isConnecting = false
+                        binding.executePendingBindings()
+                        Toast.makeText(requireContext(),"Connection failed",Toast.LENGTH_SHORT).show()                }
+
+                    override fun onCreateConnection() {
+                        setLockedScreen(false)
+                        binding.isConnecting = false
+                        binding.executePendingBindings()
+                        Toast.makeText(requireContext(),"Connected",Toast.LENGTH_SHORT).show()
+
+                    }
+
+                    override fun onDestroyConnection() {
+                        Toast.makeText(requireContext(),"Disconnected",Toast.LENGTH_SHORT).show()
+                    }
+
+                    override fun onReceiveData(bytes: ByteArray, size: Int) {
+                        val statusResponse = StatusResponse(bytes)
+                        Timber.i("Status response: $statusResponse")
+                    }
+
+                })
+                //start()
+            }
+
+        }
+
     }
 
 }

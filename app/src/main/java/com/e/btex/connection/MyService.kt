@@ -2,6 +2,7 @@ package com.e.btex.connection
 
 import android.app.Service
 import android.bluetooth.BluetoothAdapter.getDefaultAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
@@ -10,6 +11,9 @@ import timber.log.Timber
 class MyService : Service() {
     // Binder given to clients
     private val mBinder = LocalBinder()
+
+    var bluetoothConnectionService: BluetoothConnectionService? = null
+
     // Random number generator
 
     private var callback: (()->Unit)? = null
@@ -41,12 +45,11 @@ class MyService : Service() {
     override fun onCreate() {
         super.onCreate()
         Timber.d("onCreate")
-        Thread{
-            while (true){
-                Thread.sleep(500)
-                callback?.invoke()
-            }
-        }.start()
+
+    }
+
+    fun startClient(device: BluetoothDevice) {
+        bluetoothConnectionService?.startClient(device)
     }
 
 
