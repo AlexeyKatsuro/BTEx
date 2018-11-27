@@ -1,21 +1,27 @@
 package com.e.btex.utils.plot
 
+import android.os.Handler
+import com.e.btex.data.dto.Sensors
 import java.util.*
 
-class DynamicXYDataSource: Runnable {
+class DynamicXYDataSource(val handler: Handler) : Runnable {
     // encapsulates management of the observers watching this datasource for update events:
 
     var startTime = Date().time
 
+    private var onUpdateCallback: ((Sensors) -> Unit)? = null
+
     inner class MyObservable : Observable() {
 
-       fun change(){
-           setChanged()
-       }
+        fun change() {
+            setChanged()
+        }
     }
 
+    var title: String = "Temperature"
 
-    var list: MutableList<Int> = ArrayList()
+
+    var list: MutableList<Sensors> = ArrayList()
 
     private var notifier = MyObservable()
     private var keepRunning = false
@@ -32,14 +38,9 @@ class DynamicXYDataSource: Runnable {
             while (keepRunning) {
 
                 Thread.sleep(500) // decrease or remove to speed up the refresh rate.
-
-                list.add(Random().nextInt(10))
-                if (list.size > 100) {
-                    list.clear()
+                handler.post {
+                    update()
                 }
-
-                notifier.change()
-                notifier.notifyObservers("")
 
 
             }
@@ -48,6 +49,33 @@ class DynamicXYDataSource: Runnable {
         }
 
     }
+
+    fun update() {
+
+
+        val  sensors = createMockSensors()
+
+        list.add(sensors)
+        if (list.size > 20) {
+            list.removeAt(0)
+        }
+
+        onUpdateCallback?.invoke(sensors)
+
+    }
+
+    fun setOnUpdateCallback(callback: (Sensors)->Unit){
+        onUpdateCallback = callback
+    }
+
+    private fun createMockSensors() = Sensors(
+            Random().nextInt(35).toFloat(),
+            Random().nextInt(1000).toFloat(),
+            Random().nextInt(325).toFloat(),
+            Random().nextInt(100).toFloat(),
+            Random().nextInt(10).toFloat(),
+            Random().nextInt(50).toFloat(),
+            Random().nextInt(5).toFloat())
 
     fun getItemCount(series: Int): Int {
         return list.size
@@ -58,8 +86,10 @@ class DynamicXYDataSource: Runnable {
     }
 
     fun getY(series: Int, index: Int): Number {
-        return list[index]
+        return list[index].temperature.value
     }
+
+    fun getTitle(series: Int) = title
 
     fun addObserver(observer: Observer) {
         notifier.addObserver(observer)

@@ -5,7 +5,12 @@ import com.androidplot.xy.XYSeries
 class DynamicSeries(private val dataSource: DynamicXYDataSource, private val seriesIndex: Int, private val title: String) : XYSeries {
 
     override fun getTitle(): String {
-        return title
+        return dataSource.getTitle(seriesIndex).let {
+            if(it.isEmpty())
+                title
+            else
+                it
+        }
     }
 
     override fun size(): Int {

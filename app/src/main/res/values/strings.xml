@@ -12,13 +12,8 @@
     <string name="pm25">pm25</string>
     <string name="tvoc">tvoc</string>
 
-    <string name="temperature_val">Temperature: %1$.2f</string>
-    <string name="humidity_val">Humidity: %1$.2f</string>
-    <string name="co2_val">co2: %1$.2f</string>
-    <string name="pm1_val">pm1: %1$.2f</string>
-    <string name="pm10_val">pm10: %1$.2f</string>
-    <string name="pm25_val">pm25: %1$.2f</string>
-    <string name="tvoc_val">tvoc: %1$.2f</string>
+    <string name="sensor_val">%1$s: %2$.2f</string>
+
     
     <string-array name="sensors">
         <item>@string/temperature</item>

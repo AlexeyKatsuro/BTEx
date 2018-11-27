@@ -1,12 +1,53 @@
 package com.e.btex.connection
 
 import android.app.Service
+import android.bluetooth.BluetoothAdapter.getDefaultAdapter
 import android.content.Intent
+import android.os.Binder
 import android.os.IBinder
+import timber.log.Timber
 
 class MyService : Service() {
+    // Binder given to clients
+    private val mBinder = LocalBinder()
+    // Random number generator
+
+    private var callback: (()->Unit)? = null
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    inner class LocalBinder : Binder() {
+        val service: MyService
+            get() = this@MyService
+    }
 
     override fun onBind(intent: Intent): IBinder {
-        TODO("Return the communication channel to the service.")
+        Timber.d("onBind")
+        return mBinder
     }
+
+
+    fun setCallback(cb: ()->Unit){
+        callback = cb
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.d("onDestroy")
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        Timber.d("onCreate")
+        Thread{
+            while (true){
+                Thread.sleep(500)
+                callback?.invoke()
+            }
+        }.start()
+    }
+
+
 }
