@@ -34,5 +34,5 @@ val Int.toBluetoothScanMode: String
     }
 
 fun BluetoothDevice.showInfoInLog() {
-    Timber.i("name = $name, address = $address")
+    Timber.d("name = $name, address = $address")
 }

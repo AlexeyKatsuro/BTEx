@@ -28,7 +28,7 @@ class AcceptThread(appName: String,
         try {
             tmp = bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(appName, uuidInsecure)
 
-            Timber.i("AcceptThread: Setting up Server using: $uuidInsecure")
+            Timber.d("AcceptThread: Setting up Server using: $uuidInsecure")
         } catch (e: IOException) {
             Timber.e(e,"AcceptThread: IOException: ${e.message}")
         }
@@ -39,18 +39,18 @@ class AcceptThread(appName: String,
 
 
     override fun run() {
-        Timber.i("run: AcceptThread Running.")
+        Timber.d("run: AcceptThread Running.")
 
         var socket: BluetoothSocket? = null
 
         try {
             // This is a blocking call and will only return on a
             // successful connection or an exception
-            Timber.i("run: RFCOM server socket start.....")
+            Timber.d("run: RFCOM server socket start.....")
 
             socket = mmServerSocket!!.accept()
 
-            Timber.i("run: RFCOM server socket accepted connection.")
+            Timber.d("run: RFCOM server socket accepted connection.")
 
         } catch (e: IOException) {
             Timber.e(e, ("AcceptThread: IOException: ${e.message}"))
@@ -61,11 +61,11 @@ class AcceptThread(appName: String,
             onConneted.invoke(socket)
         }
 
-        Timber.i("END mAcceptThread ")
+        Timber.d("END mAcceptThread ")
     }
 
     fun cancel() {
-        Timber.i("cancel: Canceling AcceptThread.")
+        Timber.d("cancel: Canceling AcceptThread.")
         try {
             mmServerSocket!!.close()
         } catch (e: IOException) {

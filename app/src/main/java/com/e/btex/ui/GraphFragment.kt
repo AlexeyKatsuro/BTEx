@@ -1,6 +1,8 @@
 package com.e.btex.ui
 
 import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.Handler
@@ -30,7 +32,6 @@ class GraphFragment : Fragment() {
 
     private lateinit var binding: FragmentGraphBinding
 
-    private val sensors = Sensors()
 
     private lateinit var plot: XYPlot
     private lateinit var data: DynamicXYDataSource
@@ -51,9 +52,7 @@ class GraphFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
 
-        binding = FragmentGraphBinding.inflate(inflater, container, false).apply {
-            sensors = this@GraphFragment.sensors
-        }
+        binding = FragmentGraphBinding.inflate(inflater, container, false)
         binding.appBar.toolBar.inflateMenu(R.menu.main_menu)
 
 
@@ -103,21 +102,21 @@ class GraphFragment : Fragment() {
 
     override fun onResume() {
         // kick off the data generating thread:
-        Thread(data).start()
+       // Thread(data).start()
         super.onResume()
     }
 
     override fun onStart() {
         super.onStart()
-//        val intent = Intent(requireContext(), MyService::class.java)
-//        requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        val intent = Intent(requireContext(), MyService::class.java)
+        requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         // Unbind from the service
         if (isConnected) {
-            //requireActivity().unbindService(connection)
+            requireActivity().unbindService(connection)
             isConnected = false
         }
     }
@@ -183,13 +182,7 @@ class GraphFragment : Fragment() {
 
             service = (iBinder as MyService.LocalBinder).service
             isConnected = true
-            val handler = Handler()
-            service?.setCallback {
-                Timber.d(". . .")
-                handler.post {
-                    Toast.makeText(requireContext(), ".", Toast.LENGTH_SHORT).show()
-                }
-            }
+
         }
 
     }

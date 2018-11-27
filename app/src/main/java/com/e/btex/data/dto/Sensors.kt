@@ -2,14 +2,13 @@ package com.e.btex.data.dto
 
 import android.content.res.Resources
 
-class Sensors(temperature: Float = 0.0f,
-                    humidity: Float = 0.0f,
-                    co2: Float = 0.0f,
-                    pm1: Float = 0.0f,
-                    pm10: Float = 0.0f,
-                    pm25: Float = 0.0f,
-                    tvoc: Float = 0.0f,
-              val res: Resources? =null
+class Sensors(temperature: Number,
+                    humidity: Number,
+                    co2: Number,
+                    pm1: Number,
+                    pm10: Number,
+                    pm25: Number,
+                    tvoc: Number
 ) {
 
     val temperature =  Sensor.Temperature(temperature)
@@ -28,5 +27,10 @@ class Sensors(temperature: Float = 0.0f,
             pm10,
             pm25,
             tvoc)
+
+    override fun toString(): String {
+        return "Sensors(temperature=$temperature, humidity=$humidity, co2=$co2, pm1=$pm1, pm10=$pm10, pm25=$pm25, tvoc=$tvoc)"
+    }
+
 
 }

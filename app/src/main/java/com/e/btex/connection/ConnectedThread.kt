@@ -5,7 +5,6 @@ import android.os.Handler
 import com.e.btex.ui.common.BtConnectionListener
 import timber.log.Timber
 import java.io.IOException
-import java.nio.charset.Charset
 
 /**
  * Finally the ConnectedThread which is responsible for maintaining the BTConnection, Sending the data, and
@@ -15,12 +14,14 @@ class ConnectedThread(private val socket: BluetoothSocket,
                       private val handler: Handler,
                       private val listner: BtConnectionListener?) : Thread() {
 
+    private var isRunnig = false
     private val inputStream = socket.inputStream
     private var outStream = socket.outputStream
 
     override fun run() {
 
-        Timber.i("ConnectedThread: Starting.")
+        Timber.d("ConnectedThread: Starting.")
+        isRunnig = true
         handler.post {
             listner?.onCreateConnection()
         }
@@ -35,33 +36,37 @@ class ConnectedThread(private val socket: BluetoothSocket,
         val byteList = mutableListOf<Byte>()
         var isData = false
 
-        while (true) {
+        while (isRunnig) {
             // Read from the InputStream
             try {
                 bytes = inputStream!!.read(buffer)
-                Timber.i("Read from the InputStream: $bytes Bytes")
+                Timber.d("Read from the InputStream: $bytes Bytes")
 
 
                 if(buffer.sliceArray(0 until 2).contentEquals(byteArrayOf(222.toByte(),175.toByte()))){
-                    Timber.i("Read Status signature")
+                    Timber.d("Read Status signature")
                     isData = true
                     byteReceived = 0
                     byteList.clear()
                 }
 
                 if (isData){
-                    Timber.i("Read Status Data: ${bytes} Bytes")
+                    Timber.d("Read Status Data: ${bytes} Bytes")
                     byteList.addAll(buffer.slice(0 until bytes))
                      byteReceived+=bytes
 
                     if (byteReceived == 23){
-                        Timber.i("All status data was received: ${byteList.size} Bytes")
+                        Timber.d("All status data was received: ${byteList.size} Bytes")
                         handler.post {
                             listner?.onReceiveData(byteList.toByteArray(),byteReceived)
                         }
                         isData = false
                     }
                 }
+//                Thread.sleep(5000)
+//                handler.post {
+//                    listner?.onReceiveData(byteList.toByteArray(), byteReceived)
+//                }
 
 
             } catch (e: IOException) {
@@ -79,6 +84,7 @@ class ConnectedThread(private val socket: BluetoothSocket,
 
     /* Call this from the main activity to shutdown the connection */
     fun cancel() {
+        isRunnig = false
         try {
             socket.close()
         } catch (e: IOException) {

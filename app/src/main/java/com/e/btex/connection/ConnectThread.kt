@@ -32,14 +32,14 @@ class ConnectThread(private val device: BluetoothDevice,
     }
 
     override fun run() {
-        Timber.i("ConnectThread: started.")
+        Timber.d("ConnectThread: started.")
         handler.post {
             listner?.onStartConnecting()
         }
         // Get a BluetoothSocket for a connection with the
         // given BluetoothDevice
         try {
-            Timber.i("ConnectThread: Trying to create InsecureRfcommSocket using UUID: $uuid")
+            Timber.d("ConnectThread: Trying to create InsecureRfcommSocket using UUID: $uuid")
             socket = createBluetoothSocket(device)?: throw  IOException("socket is NULL")
         } catch (e: IOException) {
             Timber.e(e, "ConnectThread: Could not create InsecureRfcommSocket ${e.message}")
@@ -54,7 +54,7 @@ class ConnectThread(private val device: BluetoothDevice,
             // This is a blocking call and will only return on a
             // successful connection or an exception
             socket.connect()
-            Timber.i("run: ConnectThread connected.")
+            Timber.d("run: ConnectThread connected.")
             onConneted(socket)
         } catch (e: IOException) {
             // Close the socket
@@ -64,14 +64,14 @@ class ConnectThread(private val device: BluetoothDevice,
                 listner?.onFailedConnecting()
             }
 
-            Timber.i("run: ConnectThread: Could not connect to UUID: $uuid")
+            Timber.d("run: ConnectThread: Could not connect to UUID: $uuid")
         }
     }
 
 
     fun cancel() {
         try {
-            Timber.i("cancel: Closing Client Socket.")
+            Timber.d("cancel: Closing Client Socket.")
             socket.close()
 
         } catch (e: IOException) {

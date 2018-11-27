@@ -27,6 +27,7 @@ import com.e.btex.broadcastReceivers.BluetoothStateReceiver
 import com.e.btex.connection.BluetoothConnectionService
 import com.e.btex.connection.MyService
 import com.e.btex.data.StatusResponse
+import com.e.btex.data.dto.Sensors
 import com.e.btex.databinding.FragmentSettingBinding
 import com.e.btex.ui.common.BtConnectionListener
 import com.e.btex.utils.AutoSubscribeReceiver
@@ -35,6 +36,7 @@ import com.e.btex.utils.extensions.showInfoInLog
 import org.jetbrains.anko.longToast
 import org.jetbrains.anko.toast
 import timber.log.Timber
+import java.util.*
 import kotlin.properties.Delegates
 
 
@@ -173,14 +175,14 @@ class SettingFragment : Fragment() {
 
         onStateChangedReceiver.setOnStateChangedListener(object : BluetoothStateReceiver.OnStateChangedListener {
             override fun onStateOff() {
-                Timber.i("onStateOff")
+                Timber.d("onStateOff")
                 binding.appBar.btSwitch.isEnabled = true
                 isAutoTurn = true
                 isBTEnabled = false
             }
 
             override fun onStateOn() {
-                Timber.i("onStateOn")
+                Timber.d("onStateOn")
                 binding.appBar.btSwitch.isEnabled = true
                 isAutoTurn = true
                 isBTEnabled = true
@@ -190,51 +192,51 @@ class SettingFragment : Fragment() {
             }
 
             override fun onStateTurningOff() {
-                Timber.i("onStateTurningOff")
+                Timber.d("onStateTurningOff")
                 binding.appBar.btSwitch.isEnabled = false
             }
 
             override fun onStateTurningOn() {
-                Timber.i("onStateTurningOn")
+                Timber.d("onStateTurningOn")
                 binding.appBar.btSwitch.isEnabled = false
             }
 
         })
         onScanModeChangedReceiver.setOnVisibilityChangedListener(object : BluetoothScanModeReceiver.OnScanModeChangedListener {
             override fun onScanModeConnectableDiscoverable() {
-                Timber.i("onScanModeConnectableDiscoverable")
+                Timber.d("onScanModeConnectableDiscoverable")
             }
 
             override fun onScanModeConnectable() {
-                Timber.i("onScanModeConnectable")
+                Timber.d("onScanModeConnectable")
             }
 
             override fun onScanModeNone() {
-                Timber.i("onScanModeNone")
+                Timber.d("onScanModeNone")
             }
 
             override fun onStateConnecting() {
-                Timber.i("onStateConnecting")
+                Timber.d("onStateConnecting")
             }
 
             override fun onStateConnected() {
-                Timber.i("onStateConnected")
+                Timber.d("onStateConnected")
             }
 
         })
         onDeviceDiscoveredReceiver.setOnDeviceReceivedListener(object : BluetoothDeviceReceiver.OnDeviceReceivedListener {
             override fun onStartDiscovery() {
-                Timber.i("onStartDiscovery")
+                Timber.d("onStartDiscovery")
                 binding.isScaning = true
             }
 
             override fun onStopDiscovery() {
-                Timber.i("onStopDiscovery")
+                Timber.d("onStopDiscovery")
                 binding.isScaning = false
             }
 
             override fun onDeviceReceived(device: BluetoothDevice) {
-                Timber.i("onDeviceReceived:")
+                Timber.d("onDeviceReceived:")
                 device.showInfoInLog()
                 deviceList.add(device)
                 deviceAdapter.submitList(deviceList.toList())
@@ -243,15 +245,15 @@ class SettingFragment : Fragment() {
         })
         onBondStateReceiver.setOnBondStateListener(object : BluetoothBondStateReceiver.OnBondStateChangedListener {
             override fun onBondBonded(device: BluetoothDevice) {
-                Timber.i("onBondBonded")
+                Timber.d("onBondBonded")
             }
 
             override fun onBondBonding(device: BluetoothDevice) {
-                Timber.i("onBondBonding")
+                Timber.d("onBondBonding")
             }
 
             override fun onBondNone(device: BluetoothDevice) {
-                Timber.i("onBondNone")
+                Timber.d("onBondNone")
             }
 
         })
@@ -365,7 +367,26 @@ class SettingFragment : Fragment() {
 
                     override fun onReceiveData(bytes: ByteArray, size: Int) {
                         val statusResponse = StatusResponse(bytes)
-                        Timber.i("Status response: $statusResponse")
+                        Timber.d("Status response: $statusResponse")
+
+
+                        val sensors = Sensors(
+                                temperature = statusResponse.temperature,
+                                humidity = statusResponse.humidity,
+                                co2 = statusResponse.co2,
+                                pm1 = statusResponse.pm1,
+                                pm25 = statusResponse.pm25,
+                                pm10 = statusResponse.pm10,
+                                tvoc = statusResponse.tvoc)
+//                        val sensors = Sensors(
+//                                Random().nextInt(35).toFloat(),
+//                                Random().nextInt(1000).toFloat(),
+//                                Random().nextInt(325).toFloat(),
+//                                Random().nextInt(100).toFloat(),
+//                                Random().nextInt(10).toFloat(),
+//                                Random().nextInt(50).toFloat(),
+//                                Random().nextInt(5).toFloat())
+                        Timber.d("Sensors data: $sensors")
                     }
 
                 })
@@ -374,6 +395,11 @@ class SettingFragment : Fragment() {
 
         }
 
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+            requireActivity().unbindService(connection)
     }
 
 }

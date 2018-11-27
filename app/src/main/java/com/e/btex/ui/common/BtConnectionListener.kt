@@ -9,4 +9,6 @@ interface BtConnectionListener{
     fun onDestroyConnection()
 
     fun onReceiveData(bytes: ByteArray,size: Int)
+
+
 }

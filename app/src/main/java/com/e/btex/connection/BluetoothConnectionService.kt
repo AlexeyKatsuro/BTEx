@@ -35,7 +35,7 @@ class BluetoothConnectionService(private val context: Context,private val blueto
      */
     @Synchronized
     fun start() {
-        Timber.i("start")
+        Timber.d("start")
 
         // Cancel any thread attempting to make a connection
         mConnectThread = null
@@ -54,7 +54,7 @@ class BluetoothConnectionService(private val context: Context,private val blueto
      */
 
     fun startClient(device: BluetoothDevice) {
-        Timber.i("startClient: Started.")
+        Timber.d("startClient: Started.")
 
         //initprogress dialog
 
@@ -66,7 +66,7 @@ class BluetoothConnectionService(private val context: Context,private val blueto
 
 
     private fun connected(socket: BluetoothSocket) {
-        Timber.i("connected: Starting.")
+        Timber.d("connected: Starting.")
 
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = ConnectedThread(socket,handler,btConnectionListener)
@@ -78,4 +78,10 @@ class BluetoothConnectionService(private val context: Context,private val blueto
     }
 
     var btConnectionListener: BtConnectionListener? = null
+
+    fun cancel(){
+        mInsecureAcceptThread?.cancel()
+        mConnectThread?.cancel()
+        mConnectedThread?.cancel()
+    }
 }
