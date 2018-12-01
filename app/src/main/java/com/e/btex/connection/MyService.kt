@@ -40,7 +40,9 @@ class MyService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Timber.d("onDestroy")
+        bluetoothConnectionService?.cancel()
     }
+
 
     override fun onCreate() {
         super.onCreate()
