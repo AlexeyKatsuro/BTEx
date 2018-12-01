@@ -4,12 +4,11 @@
 
 package com.e.btex.utils
 
-import android.content.BroadcastReceiver
-import android.content.IntentFilter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
+import com.e.btex.broadcastReceivers.SpecificBroadcastReceiver
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -18,7 +17,7 @@ import kotlin.reflect.KProperty
  *
  * Accessing this variable in a destroyed fragment will throw NPE.
  */
-class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val filterActions: List<String>) : ReadWriteProperty<Fragment, T> {
+class AutoSubscribeSpecificReceiver<T : SpecificBroadcastReceiver>(val fragment: Fragment) : ReadWriteProperty<Fragment, T> {
     private var _value: T? = null
 
     init {
@@ -39,11 +38,8 @@ class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val fi
     override fun setValue(thisRef: Fragment, property: KProperty<*>, value: T) {
         unregisterReceiver()
         _value = value
-        val intentFilter = IntentFilter()
-        filterActions.forEach {
-            intentFilter.addAction(it)
-        }
-        fragment.requireActivity().registerReceiver(_value, intentFilter)
+
+        fragment.requireActivity().registerReceiver(_value, _value?.getFilterActions())
     }
 
     private fun unregisterReceiver() {
@@ -56,5 +52,5 @@ class AutoRegisterReceiver<T : BroadcastReceiver>(val fragment: Fragment, val fi
 /**
  * Creates an [AutoSubscribeReceiver] associated with this fragment.
  */
-//fun <T : BroadcastReceiver> Fragment.AutoSubscribeReceiver(filterAction: String) = AutoRegisterReceiver<T>(this, listOf(filterAction))
-fun <T : BroadcastReceiver> Fragment.AutoSubscribeReceiver(vararg filterActions: String) = AutoRegisterReceiver<T>(this, filterActions.asList())
+fun <T : SpecificBroadcastReceiver> Fragment.AutoSubscribeReceiver()
+        = AutoSubscribeSpecificReceiver<T>(this)

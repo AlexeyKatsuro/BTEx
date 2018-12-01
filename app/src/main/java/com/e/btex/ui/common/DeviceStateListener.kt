@@ -1,6 +1,6 @@
 package com.e.btex.ui.common
 
-interface BtConnectionListener{
+interface DeviceStateListener{
 
     fun onStartConnecting()
     fun onFailedConnecting()

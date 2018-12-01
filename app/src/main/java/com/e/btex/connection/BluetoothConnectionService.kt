@@ -1,21 +1,17 @@
 package com.e.btex.connection
 
 import android.bluetooth.BluetoothAdapter
-import android.content.Context
 import java.util.*
-import com.e.btex.R
 import android.bluetooth.BluetoothSocket
 import timber.log.Timber
 import android.bluetooth.BluetoothDevice
-import android.app.ProgressDialog
-import android.os.Handler
-import com.e.btex.ui.common.BtConnectionListener
+import com.e.btex.ui.common.DeviceStateListener
 import kotlin.properties.Delegates
 
 
-class BluetoothConnectionService(private val context: Context,private val bluetoothAdapter: BluetoothAdapter, private val handler: Handler) {
+class BluetoothConnectionService(private val bluetoothAdapter: BluetoothAdapter) {
 
-    private val appName = context.getString(R.string.app_name)
+    private val appName = "BTEx"
     private val uuidInsecure = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")//UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66")
 
     private var mInsecureAcceptThread: AcceptThread? = null
@@ -58,7 +54,7 @@ class BluetoothConnectionService(private val context: Context,private val blueto
 
         //initprogress dialog
 
-        mConnectThread = ConnectThread(device, uuidInsecure, bluetoothAdapter, handler, btConnectionListener){
+        mConnectThread = ConnectThread(device, uuidInsecure, bluetoothAdapter, mDeviceStateListener){
             connected(it)
         }
         mConnectThread?.start()
@@ -69,15 +65,15 @@ class BluetoothConnectionService(private val context: Context,private val blueto
         Timber.d("connected: Starting.")
 
         // Start the thread to manage the connection and perform transmissions
-        mConnectedThread = ConnectedThread(socket,handler,btConnectionListener)
+        mConnectedThread = ConnectedThread(socket, mDeviceStateListener)
         mConnectedThread?.start()
     }
 
-    fun setBTConnectionListener(listner: BtConnectionListener){
-        btConnectionListener = listner
+    fun setBTConnectionListener(listner: DeviceStateListener){
+        mDeviceStateListener = listner
     }
 
-    var btConnectionListener: BtConnectionListener? = null
+    var mDeviceStateListener: DeviceStateListener? = null
 
     fun cancel(){
         mInsecureAcceptThread?.cancel()

@@ -11,7 +11,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
-import android.os.Handler
 import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
@@ -20,16 +19,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.e.btex.R
-import com.e.btex.broadcastReceivers.BluetoothBondStateReceiver
-import com.e.btex.broadcastReceivers.BluetoothDeviceReceiver
-import com.e.btex.broadcastReceivers.BluetoothScanModeReceiver
-import com.e.btex.broadcastReceivers.BluetoothStateReceiver
-import com.e.btex.connection.BluetoothConnectionService
-import com.e.btex.connection.MyService
-import com.e.btex.data.StatusResponse
+import com.e.btex.broadcastReceivers.*
+import com.e.btex.connection.BTService
 import com.e.btex.data.dto.Sensors
 import com.e.btex.databinding.FragmentSettingBinding
-import com.e.btex.ui.common.BtConnectionListener
+import com.e.btex.ui.common.DeviceStateListener
 import com.e.btex.utils.AutoSubscribeReceiver
 import com.e.btex.utils.extensions.setLockedScreen
 import com.e.btex.utils.extensions.showInfoInLog
@@ -53,8 +47,7 @@ class SettingFragment : Fragment() {
     private lateinit var pairedDeviceAdapter: DeviceAdapter
     private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
 
-    //private var bluetoothConnection: BluetoothConnectionService? = null
-    private var service: MyService? = null
+    private var mService: BTService? = null
 
     private var isBluetoothExist: Boolean = false
 
@@ -90,6 +83,8 @@ class SettingFragment : Fragment() {
                     ACTION_DISCOVERY_STARTED,
                     ACTION_DISCOVERY_FINISHED)
 
+    private var deviceStateReceiver by AutoSubscribeReceiver<DeviceStateReceiver>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -102,6 +97,7 @@ class SettingFragment : Fragment() {
         onStateChangedReceiver = BluetoothStateReceiver()
         onScanModeChangedReceiver = BluetoothScanModeReceiver()
         onBondStateReceiver = BluetoothBondStateReceiver()
+        deviceStateReceiver = DeviceStateReceiver()
 
 
         if(isBtStateValid)
@@ -150,7 +146,7 @@ class SettingFragment : Fragment() {
         pairedDeviceAdapter = DeviceAdapter {
             if(isBtStateValid) {
                // bluetoothConnection?.startClient(it)
-                service?.startClient(it)
+                mService?.startClient(it)
             }
         }
 
@@ -173,6 +169,57 @@ class SettingFragment : Fragment() {
             }
         }
 
+        deviceStateReceiver.setBtConnectionListener(object : DeviceStateListener {
+            override fun onStartConnecting() {
+                setLockedScreen(true)
+                binding.isConnecting = true
+                binding.executePendingBindings()
+            }
+
+            override fun onFailedConnecting() {
+                setLockedScreen(false)
+                binding.isConnecting = false
+                binding.executePendingBindings()
+                Toast.makeText(requireContext(), "Connection failed", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onCreateConnection() {
+                setLockedScreen(false)
+                binding.isConnecting = false
+                binding.executePendingBindings()
+                Toast.makeText(requireContext(), "Connected", Toast.LENGTH_SHORT).show()
+                findNavController().navigateUp()
+
+            }
+
+            override fun onDestroyConnection() {
+                Toast.makeText(requireContext(), "Disconnected", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onReceiveData(bytes: ByteArray, size: Int) {
+//                val statusResponse = StatusResponse(bytes)
+//                Timber.d("Status response: $statusResponse")
+//
+//                val sensors = Sensors(
+//                        temperature = statusResponse.temperature,
+//                        humidity = statusResponse.humidity,
+//                        co2 = statusResponse.co2,
+//                        pm1 = statusResponse.pm1,
+//                        pm25 = statusResponse.pm25,
+//                        pm10 = statusResponse.pm10,
+//                        tvoc = statusResponse.tvoc)
+                val sensors = Sensors(
+                        Random().nextInt(35).toFloat(),
+                        Random().nextInt(1000).toFloat(),
+                        Random().nextInt(325).toFloat(),
+                        Random().nextInt(100).toFloat(),
+                        Random().nextInt(10).toFloat(),
+                        Random().nextInt(50).toFloat(),
+                        Random().nextInt(5).toFloat())
+                Timber.d("Sensors data: $sensors")
+            }
+        })
+
         onStateChangedReceiver.setOnStateChangedListener(object : BluetoothStateReceiver.OnStateChangedListener {
             override fun onStateOff() {
                 Timber.d("onStateOff")
@@ -187,7 +234,7 @@ class SettingFragment : Fragment() {
                 isAutoTurn = true
                 isBTEnabled = true
 
-                if(service == null)
+                if(mService == null)
                     initBlueToothService()
             }
 
@@ -263,7 +310,7 @@ class SettingFragment : Fragment() {
 
     fun initBlueToothService() {
 
-        val intent = Intent(requireContext(), MyService::class.java)
+        val intent = Intent(requireContext(), BTService::class.java)
         requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
 
 
@@ -336,63 +383,7 @@ class SettingFragment : Fragment() {
         }
 
         override fun onServiceConnected(name: ComponentName?, iBinder: IBinder) {
-
-            service = (iBinder as MyService.LocalBinder).service
-            service?.bluetoothConnectionService = BluetoothConnectionService(requireContext(), bluetoothAdapter, Handler()).apply {
-
-                setBTConnectionListener(object : BtConnectionListener{
-                    override fun onStartConnecting() {
-                        setLockedScreen(true)
-                        binding.isConnecting = true
-                        binding.executePendingBindings()
-                    }
-
-                    override fun onFailedConnecting() {
-                        setLockedScreen(false)
-                        binding.isConnecting = false
-                        binding.executePendingBindings()
-                        Toast.makeText(requireContext(),"Connection failed",Toast.LENGTH_SHORT).show()                }
-
-                    override fun onCreateConnection() {
-                        setLockedScreen(false)
-                        binding.isConnecting = false
-                        binding.executePendingBindings()
-                        Toast.makeText(requireContext(),"Connected",Toast.LENGTH_SHORT).show()
-
-                    }
-
-                    override fun onDestroyConnection() {
-                        Toast.makeText(requireContext(),"Disconnected",Toast.LENGTH_SHORT).show()
-                    }
-
-                    override fun onReceiveData(bytes: ByteArray, size: Int) {
-                        val statusResponse = StatusResponse(bytes)
-                        Timber.d("Status response: $statusResponse")
-
-
-                        val sensors = Sensors(
-                                temperature = statusResponse.temperature,
-                                humidity = statusResponse.humidity,
-                                co2 = statusResponse.co2,
-                                pm1 = statusResponse.pm1,
-                                pm25 = statusResponse.pm25,
-                                pm10 = statusResponse.pm10,
-                                tvoc = statusResponse.tvoc)
-//                        val sensors = Sensors(
-//                                Random().nextInt(35).toFloat(),
-//                                Random().nextInt(1000).toFloat(),
-//                                Random().nextInt(325).toFloat(),
-//                                Random().nextInt(100).toFloat(),
-//                                Random().nextInt(10).toFloat(),
-//                                Random().nextInt(50).toFloat(),
-//                                Random().nextInt(5).toFloat())
-                        Timber.d("Sensors data: $sensors")
-                    }
-
-                })
-                //start()
-            }
-
+            mService = (iBinder as BTService.LocalBinder).service
         }
 
     }

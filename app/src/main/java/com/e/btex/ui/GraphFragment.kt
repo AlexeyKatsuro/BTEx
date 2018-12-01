@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.graphics.DashPathEffect
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
@@ -14,17 +15,22 @@ import android.widget.AdapterView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.androidplot.util.PixelUtils
 import com.androidplot.xy.*
 import com.e.btex.R
-import com.e.btex.connection.MyService
+import com.e.btex.broadcastReceivers.DeviceStateReceiver
+import com.e.btex.connection.BTService
 import com.e.btex.data.dto.Sensor
 import com.e.btex.data.dto.Sensors
 import com.e.btex.databinding.FragmentGraphBinding
+import com.e.btex.ui.common.DeviceStateListener
+import com.e.btex.utils.AutoSubscribeReceiver
 import com.e.btex.utils.extensions.getName
 import com.e.btex.utils.plot.DynamicXYDataSource
 import com.e.btex.utils.plot.SensorSeries
 import timber.log.Timber
 import java.text.DecimalFormat
+import java.util.*
 
 
 class GraphFragment : Fragment() {
@@ -38,16 +44,13 @@ class GraphFragment : Fragment() {
 
     private lateinit var sensorAdapter: SensorAdapter
 
+    private var deviceStateReceiver by AutoSubscribeReceiver<DeviceStateReceiver>()
+
     var isConnected = false
 
-    private var service: MyService? = null
+    private var mService: BTService? = null
 
     private lateinit var series: SensorSeries
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
@@ -55,6 +58,7 @@ class GraphFragment : Fragment() {
         binding = FragmentGraphBinding.inflate(inflater, container, false)
         binding.appBar.toolBar.inflateMenu(R.menu.main_menu)
 
+        deviceStateReceiver = DeviceStateReceiver()
 
         sensorAdapter = SensorAdapter()
 
@@ -66,13 +70,6 @@ class GraphFragment : Fragment() {
         plot.graph.getLineLabelStyle(XYGraphWidget.Edge.BOTTOM).format = DecimalFormat("0")
         plot.graph.getLineLabelStyle(XYGraphWidget.Edge.LEFT).format = DecimalFormat("###.##")
 
-        data = DynamicXYDataSource(Handler())
-
-        data.setOnUpdateCallback {
-            sensorAdapter.submitList(it.getSensorList())
-            series.addSensorVal(it)
-            plot.redraw()
-        }
 
         series = SensorSeries(Sensor.Temperature::class)
 
@@ -82,48 +79,32 @@ class GraphFragment : Fragment() {
 
         // thin out domain tick labels so they dont overlap each other:
         plot.domainStepMode = StepMode.INCREMENT_BY_FIT
-        //plot.domainStepValue = 1.0
+        plot.domainStepValue = 1000.0
 
         plot.rangeStepMode = StepMode.INCREMENT_BY_FIT
         //plot.rangeStepValue = 1.0
 //
-        //plot.setRangeBoundaries(0, 10, BoundaryMode.AUTO)
-        //plot.setDomainBoundaries(0, 100, BoundaryMode.AUTO)
+        plot.setRangeBoundaries(0, 10, BoundaryMode.AUTO)
+        plot.setDomainBoundaries(0, 100, BoundaryMode.AUTO)
 
         // create a dash effect for domain and range grid lines:
-//        val dashFx = DashPathEffect(
-//                floatArrayOf(PixelUtils.dpToPix(3f), PixelUtils.dpToPix(3f)), 0f)
-//        plot.graph.domainGridLinePaint.pathEffect = dashFx
-//        plot.graph.rangeGridLinePaint.pathEffect = dashFx
+        val dashFx = DashPathEffect(
+                floatArrayOf(PixelUtils.dpToPix(3f), PixelUtils.dpToPix(3f)), 0f)
+        plot.graph.domainGridLinePaint.pathEffect = dashFx
+        plot.graph.rangeGridLinePaint.pathEffect = dashFx
 
 
         return binding.root
     }
 
-    override fun onResume() {
-        // kick off the data generating thread:
-       // Thread(data).start()
-        super.onResume()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        val intent = Intent(requireContext(), MyService::class.java)
-        requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
-    }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Unbind from the service
+        // Unbind from the mService
         if (isConnected) {
             requireActivity().unbindService(connection)
             isConnected = false
         }
-    }
-
-    override fun onPause() {
-        data.stopThread()
-        super.onPause()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -132,11 +113,6 @@ class GraphFragment : Fragment() {
             when (it.itemId) {
                 R.id.action_setting -> {
                     findNavController().navigate(R.id.showSettingFragment)
-                    true
-                }
-
-                R.id.action_add -> {
-                    data.update()
                     true
                 }
                 else -> false
@@ -170,6 +146,44 @@ class GraphFragment : Fragment() {
                 plot.redraw()
             }
         }
+
+        deviceStateReceiver.setBtConnectionListener(object : DeviceStateListener {
+            override fun onStartConnecting() = Unit
+
+            override fun onFailedConnecting() = Unit
+
+            override fun onCreateConnection() = Unit
+
+            override fun onDestroyConnection() {
+                Toast.makeText(requireContext(), "Disconnected", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onReceiveData(bytes: ByteArray, size: Int) {
+//                val statusResponse = StatusResponse(bytes)
+//                Timber.d("Status response: $statusResponse")
+//
+//                val sensors = Sensors(
+//                        temperature = statusResponse.temperature,
+//                        humidity = statusResponse.humidity,
+//                        co2 = statusResponse.co2,
+//                        pm1 = statusResponse.pm1,
+//                        pm25 = statusResponse.pm25,
+//                        pm10 = statusResponse.pm10,
+//                        tvoc = statusResponse.tvoc)
+                val sensors = Sensors(
+                        Random().nextInt(35).toFloat(),
+                        Random().nextInt(1000).toFloat(),
+                        Random().nextInt(325).toFloat(),
+                        Random().nextInt(100).toFloat(),
+                        Random().nextInt(10).toFloat(),
+                        Random().nextInt(50).toFloat(),
+                        Random().nextInt(5).toFloat())
+
+                sensorAdapter.submitList(sensors.getSensorList())
+                series.addSensorVal(sensors)
+                plot.redraw()
+            }
+        })
     }
 
     private val connection = object : ServiceConnection {
@@ -180,7 +194,7 @@ class GraphFragment : Fragment() {
 
         override fun onServiceConnected(name: ComponentName?, iBinder: IBinder) {
 
-            service = (iBinder as MyService.LocalBinder).service
+            mService = (iBinder as BTService.LocalBinder).service
             isConnected = true
 
         }
