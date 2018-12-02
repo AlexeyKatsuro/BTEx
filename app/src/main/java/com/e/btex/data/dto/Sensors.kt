@@ -1,36 +1,24 @@
 package com.e.btex.data.dto
 
-import android.content.res.Resources
+import com.e.btex.data.SensorsType
 
-class Sensors(temperature: Number,
-                    humidity: Number,
-                    co2: Number,
-                    pm1: Number,
-                    pm10: Number,
-                    pm25: Number,
-                    tvoc: Number
-) {
 
-    val temperature =  Sensor.Temperature(temperature)
-    val humidity = Sensor.Humidity(humidity)
-    val co2 = Sensor.Co2(co2)
-    val pm1 = Sensor.Pm1(pm1)
-    val pm10 =  Sensor.Pm10(pm10)
-    val pm25 =  Sensor.Pm25(pm25)
-    val tvoc =  Sensor.Tvoc(tvoc)
-
-    fun getSensorList() = listOf(
-            temperature,
-            humidity,
-            co2,
-            pm1,
-            pm10,
-            pm25,
-            tvoc)
-
-    override fun toString(): String {
-        return "Sensors(temperature=$temperature, humidity=$humidity, co2=$co2, pm1=$pm1, pm10=$pm10, pm25=$pm25, tvoc=$tvoc)"
+data class Sensors(val temperature: Number,
+                   val humidity: Number,
+                   val co2: Number,
+                   val pm1: Number,
+                   val pm10: Number,
+                   val pm25: Number,
+                   val tvoc: Number) {
+    fun getSensorMap(): Map<SensorsType, Number> {
+        return mapOf(
+                SensorsType.temperature to temperature,
+                SensorsType.humidity to humidity,
+                SensorsType.co2 to co2,
+                SensorsType.pm1 to pm1,
+                SensorsType.pm10 to pm10,
+                SensorsType.pm25 to pm25,
+                SensorsType.tvoc to tvoc
+        )
     }
-
-
 }

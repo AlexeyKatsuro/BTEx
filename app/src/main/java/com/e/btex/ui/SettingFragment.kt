@@ -309,11 +309,8 @@ class SettingFragment : Fragment() {
 
 
     fun initBlueToothService() {
-
         val intent = Intent(requireContext(), BTService::class.java)
         requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
-
-
     }
 
     private fun updatePairedDevices() {

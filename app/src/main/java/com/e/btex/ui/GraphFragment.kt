@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.DashPathEffect
 import android.os.Bundle
-import android.os.Handler
 import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
@@ -20,14 +19,15 @@ import com.androidplot.xy.*
 import com.e.btex.R
 import com.e.btex.broadcastReceivers.DeviceStateReceiver
 import com.e.btex.connection.BTService
-import com.e.btex.data.dto.Sensor
+import com.e.btex.data.SensorsType
 import com.e.btex.data.dto.Sensors
 import com.e.btex.databinding.FragmentGraphBinding
 import com.e.btex.ui.common.DeviceStateListener
 import com.e.btex.utils.AutoSubscribeReceiver
+import com.e.btex.utils.extensions.executeAfter
 import com.e.btex.utils.extensions.getName
-import com.e.btex.utils.plot.DynamicXYDataSource
-import com.e.btex.utils.plot.SensorSeries
+import com.e.btex.utils.plot.DynamicSeries
+import com.e.btex.utils.plot.SensorDataSource
 import timber.log.Timber
 import java.text.DecimalFormat
 import java.util.*
@@ -40,9 +40,7 @@ class GraphFragment : Fragment() {
 
 
     private lateinit var plot: XYPlot
-    private lateinit var data: DynamicXYDataSource
 
-    private lateinit var sensorAdapter: SensorAdapter
 
     private var deviceStateReceiver by AutoSubscribeReceiver<DeviceStateReceiver>()
 
@@ -50,7 +48,14 @@ class GraphFragment : Fragment() {
 
     private var mService: BTService? = null
 
-    private lateinit var series: SensorSeries
+    private lateinit var dataSource: SensorDataSource
+    private lateinit var series: DynamicSeries
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initBlueToothService()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
@@ -60,9 +65,7 @@ class GraphFragment : Fragment() {
 
         deviceStateReceiver = DeviceStateReceiver()
 
-        sensorAdapter = SensorAdapter()
 
-        binding.sensorRecyclerView.adapter = sensorAdapter
 
 
         plot = binding.plot
@@ -70,8 +73,8 @@ class GraphFragment : Fragment() {
         plot.graph.getLineLabelStyle(XYGraphWidget.Edge.BOTTOM).format = DecimalFormat("0")
         plot.graph.getLineLabelStyle(XYGraphWidget.Edge.LEFT).format = DecimalFormat("###.##")
 
-
-        series = SensorSeries(Sensor.Temperature::class)
+        dataSource = SensorDataSource(requireContext())
+        series = DynamicSeries(dataSource, 0)
 
         val formatter1 = LineAndPointFormatter(requireActivity(), R.xml.line_point_formatter_with_labels)
 
@@ -128,21 +131,20 @@ class GraphFragment : Fragment() {
 
                 }
                 val type = when (position) {
-                    0 -> Sensor.Temperature::class
-                    1 -> Sensor.Humidity::class
-                    2 -> Sensor.Co2::class
-                    3 -> Sensor.Pm1::class
-                    4 -> Sensor.Pm25::class
-                    5 -> Sensor.Pm10::class
-                    6 -> Sensor.Tvoc::class
+                    0 -> SensorsType.temperature
+                    1 -> SensorsType.humidity
+                    2 -> SensorsType.co2
+                    3 -> SensorsType.pm1
+                    4 -> SensorsType.pm10
+                    5 -> SensorsType.pm25
+                    6 -> SensorsType.tvoc
                     else ->{
                         val exception = Exception("Invalid sensor type in position: $position")
                         Timber.e(exception)
                         throw exception
                     }
                 }
-                series.setSensorClass(type)
-                series.name = type.getName(resources)
+                dataSource.sensorsType = type
                 plot.redraw()
             }
         }
@@ -159,6 +161,7 @@ class GraphFragment : Fragment() {
             }
 
             override fun onReceiveData(bytes: ByteArray, size: Int) {
+                Timber.d("onReceiveData")
 //                val statusResponse = StatusResponse(bytes)
 //                Timber.d("Status response: $statusResponse")
 //
@@ -179,11 +182,18 @@ class GraphFragment : Fragment() {
                         Random().nextInt(50).toFloat(),
                         Random().nextInt(5).toFloat())
 
-                sensorAdapter.submitList(sensors.getSensorList())
-                series.addSensorVal(sensors)
+                binding.executeAfter {
+                    this.sensors = sensors
+                }
+                dataSource.addData(sensors)
                 plot.redraw()
             }
         })
+    }
+
+    fun initBlueToothService() {
+        val intent = Intent(requireContext(), BTService::class.java)
+        requireActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
     private val connection = object : ServiceConnection {
