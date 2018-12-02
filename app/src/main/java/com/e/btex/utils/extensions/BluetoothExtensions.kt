@@ -33,6 +33,10 @@ val Int.toBluetoothScanMode: String
         }
     }
 
-fun BluetoothDevice.showInfoInLog() {
-    Timber.d("name = $name, address = $address")
+fun BluetoothDevice?.showInfoInLog() {
+    if (this != null)
+        Timber.d("BluetoothDevice(name = $name, address = $address)")
+    else
+        Timber.d("BluetoothDevice(NULL)")
+
 }

@@ -5,9 +5,9 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import com.diaryoffilms.ui.common.DataBoundListAdapter
-import com.e.btex.databinding.ItemBluettoothDeciveBinding
+import com.e.btex.databinding.ItemBluettoothDeviceBinding
 
-class DeviceAdapter(private val itemCallBack: (BluetoothDevice)->Unit) : DataBoundListAdapter<BluetoothDevice, ItemBluettoothDeciveBinding>(
+class DeviceAdapter(private val itemCallBack: (BluetoothDevice)->Unit) : DataBoundListAdapter<BluetoothDevice, ItemBluettoothDeviceBinding>(
         diffCallback = object : DiffUtil.ItemCallback<BluetoothDevice>() {
                 override fun areItemsTheSame(oldItem: BluetoothDevice, newItem: BluetoothDevice) =
                         oldItem.address == newItem.address
@@ -16,12 +16,12 @@ class DeviceAdapter(private val itemCallBack: (BluetoothDevice)->Unit) : DataBou
                         oldItem == newItem
 
         }) {
-    override fun createBinding(parent: ViewGroup): ItemBluettoothDeciveBinding {
-        return ItemBluettoothDeciveBinding.inflate(LayoutInflater.from(parent.context),
+    override fun createBinding(parent: ViewGroup): ItemBluettoothDeviceBinding {
+        return ItemBluettoothDeviceBinding.inflate(LayoutInflater.from(parent.context),
                 parent, false)
     }
 
-    override fun bind(binding: ItemBluettoothDeciveBinding, item: BluetoothDevice) {
+    override fun bind(binding: ItemBluettoothDeviceBinding, item: BluetoothDevice) {
         binding.device = item
         binding.root.setOnClickListener { itemCallBack.invoke(item) }
     }

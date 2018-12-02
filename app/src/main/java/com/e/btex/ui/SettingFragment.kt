@@ -16,12 +16,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.e.btex.R
 import com.e.btex.broadcastReceivers.*
 import com.e.btex.connection.BTService
 import com.e.btex.data.dto.Sensors
+import com.e.btex.data.prefs.PreferenceStorage
 import com.e.btex.databinding.FragmentSettingBinding
 import com.e.btex.ui.common.DeviceStateListener
 import com.e.btex.utils.AutoSubscribeReceiver
@@ -47,13 +49,17 @@ class SettingFragment : Fragment() {
     private lateinit var pairedDeviceAdapter: DeviceAdapter
     private val deviceList: MutableList<BluetoothDevice> = mutableListOf()
 
-    private var mService: BTService? = null
+    private var service: BTService? = null
+    private var isConnected = false
 
     private var isBluetoothExist: Boolean = false
 
     private var isBTEnabled by Delegates.observable(false) { _, old, new ->
         binding.appBar.btSwitch.isChecked = new
     }
+
+    private lateinit var prefStorage: PreferenceStorage
+    private var targetDevice: BluetoothDevice? = null
 
     var isAutoTurn = false
 
@@ -88,6 +94,10 @@ class SettingFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+
+        prefStorage = PreferenceStorage.getInstance(requireContext())
+        targetDevice = getBluetoothDeviceByAddress(prefStorage.deviceAddress)
+
         isBluetoothExist = getDefaultAdapter()?.let {
             bluetoothAdapter = it
             true
@@ -99,13 +109,15 @@ class SettingFragment : Fragment() {
         onBondStateReceiver = BluetoothBondStateReceiver()
         deviceStateReceiver = DeviceStateReceiver()
 
-
         if(isBtStateValid)
             initBlueToothService()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentSettingBinding.inflate(inflater, container, false)
+
+        binding = FragmentSettingBinding.inflate(inflater, container, false).apply {
+            targetDevice = this@SettingFragment.targetDevice
+        }
 
         isBTEnabled = bluetoothAdapter.isEnabled
 
@@ -117,20 +129,15 @@ class SettingFragment : Fragment() {
             }
         }
 
-        binding.buttonOnOff.setOnClickListener {
-            enableDisableBT()
-        }
-
-        binding.buttonVisibility.setOnClickListener {
-            showBluetoothVisibleDialog()
-        }
-
         binding.scanning.buttonDiscovery.setOnClickListener {
             dicoverDevice()
         }
 
         binding.buttonUpdatePaired.setOnClickListener {
             updatePairedDevices()
+            binding.pairedDeviceRecyclerView.apply {
+                isGone  = !isGone
+            }
         }
 
 
@@ -146,7 +153,16 @@ class SettingFragment : Fragment() {
         pairedDeviceAdapter = DeviceAdapter {
             if(isBtStateValid) {
                // bluetoothConnection?.startClient(it)
-                mService?.startClient(it)
+                prefStorage.deviceAddress = it.address
+                service?.startClient(it)
+            }
+        }
+
+        binding.targetDeviceContainer.setOnClickListener {
+            if(isBtStateValid) {
+                targetDevice?.let {
+                    service?.startClient(it)
+                }
             }
         }
 
@@ -157,8 +173,6 @@ class SettingFragment : Fragment() {
 
         return binding.root
     }
-
-    private lateinit var Bdevice: BluetoothDevice
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -234,7 +248,7 @@ class SettingFragment : Fragment() {
                 isAutoTurn = true
                 isBTEnabled = true
 
-                if(mService == null)
+                if(service == null)
                     initBlueToothService()
             }
 
@@ -293,6 +307,7 @@ class SettingFragment : Fragment() {
         onBondStateReceiver.setOnBondStateListener(object : BluetoothBondStateReceiver.OnBondStateChangedListener {
             override fun onBondBonded(device: BluetoothDevice) {
                 Timber.d("onBondBonded")
+                updatePairedDevices()
             }
 
             override fun onBondBonding(device: BluetoothDevice) {
@@ -304,6 +319,20 @@ class SettingFragment : Fragment() {
             }
 
         })
+    }
+
+    private fun getBluetoothDeviceByAddress(address: String?): BluetoothDevice? {
+        return  try {
+            BluetoothAdapter.getDefaultAdapter()?.let {
+             if(it.isEnabled){
+                 it.getRemoteDevice(address)
+             } else
+                 null
+            }
+        }catch (e: Exception) {
+            Timber.e(e)
+            null
+        }
 
     }
 
@@ -377,17 +406,22 @@ class SettingFragment : Fragment() {
     private val connection = object : ServiceConnection {
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            isConnected = false
         }
 
         override fun onServiceConnected(name: ComponentName?, iBinder: IBinder) {
-            mService = (iBinder as BTService.LocalBinder).service
+            service = (iBinder as BTService.LocalBinder).service
+            isConnected = true
         }
 
     }
 
     override fun onDetach() {
         super.onDetach()
+        if(isConnected) {
             requireActivity().unbindService(connection)
+            isConnected = false
+        }
     }
 
 }

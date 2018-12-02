@@ -6,11 +6,8 @@ import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import androidx.core.os.bundleOf
-import com.e.btex.data.dto.Sensors
 import com.e.btex.ui.common.DeviceStateListener
 import timber.log.Timber
-import java.util.*
 
 class BTService : Service() {
 
@@ -23,6 +20,8 @@ class BTService : Service() {
         const val EXTRA_DATA = "com.e.btex.connection.bt.service.extra.DATA"
         const val EXTRA_DATA_SIZE = "com.e.btex.connection.bt.service.extra.DATA_SIZE"
     }
+
+    var connectedDevice: BluetoothDevice? = null
 
     // Binder given to clients
     private val mBinder = LocalBinder()
@@ -66,7 +65,11 @@ class BTService : Service() {
 
                 override fun onCreateConnection() = sendBroadcast(Intent(ACTION_CREATE_CONNECTION))
 
-                override fun onDestroyConnection() = sendBroadcast(Intent(ACTION_DESTROY_CONNECTION))
+
+                override fun onDestroyConnection(){
+                    sendBroadcast(Intent(ACTION_DESTROY_CONNECTION))
+                    connectedDevice = null
+                }
 
                 override fun onReceiveData(bytes: ByteArray, size: Int) {
                     val intent = Intent(ACTION_RECEIVE_DATA).apply {
@@ -83,7 +86,10 @@ class BTService : Service() {
     }
 
     fun startClient(device: BluetoothDevice) {
-        bluetoothConnectionService.startClient(device)
+        if(connectedDevice?.address != device.address) {
+            connectedDevice = device
+            bluetoothConnectionService.startClient(device)
+        }
     }
 
 

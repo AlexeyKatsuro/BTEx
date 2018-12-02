@@ -12,6 +12,9 @@
         <variable
             name="isConnecting"
             type="Boolean"/>
+        <variable
+            name="targetDevice"
+            type="android.bluetooth.BluetoothDevice"/>
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -30,40 +33,59 @@
             android:layout_height="wrap_content">
 
             <androidx.constraintlayout.widget.ConstraintLayout
-
-
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <Button
-                    android:id="@+id/button_on_off"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginTop="8dp"
-                    android:text="ON/OFF"
-                    android:visibility="gone"
-                    app:layout_constraintEnd_toStartOf="@+id/button_visibility"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
 
-                <Button
-                    android:id="@+id/button_visibility"
-                    android:layout_width="0dp"
+                <TextView
+                    android:id="@+id/text_target_device"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Target device"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <FrameLayout
+                    android:id="@+id/target_device_container"
+                    android:layout_width="0dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:background="?selectableItemBackground"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/text_target_device"
+                    android:layout_height="wrap_content">
+                    <include
+                        layout="@layout/item_target_device"
+                        app:device="@{targetDevice}" />
+                </FrameLayout>
+
+                <View
+                    android:id="@+id/divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:text="Visibility"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="@+id/button_on_off"
+                    android:background="@android:color/darker_gray"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toEndOf="@+id/button_on_off"
-                    app:layout_constraintTop_toTopOf="@+id/button_on_off" />
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/target_device_container" />
+
+                <androidx.constraintlayout.widget.Group
+                    android:id="@+id/target_group"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="@{targetDevice != null  ? View.VISIBLE : View.GONE }"
+                    app:constraint_referenced_ids="divider,target_device_container,text_target_device" />
 
 
                 <TextView
-                    android:id="@+id/textView"
+                    android:id="@+id/text_paired_devices"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
@@ -72,7 +94,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/button_on_off" />
+                    app:layout_constraintTop_toBottomOf="@+id/divider"/>
 
                 <ImageButton
                     android:id="@+id/button_update_paired"
@@ -80,23 +102,23 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:background="?selectableItemBackgroundBorderless"
-                    app:layout_constraintBottom_toBottomOf="@+id/textView"
-                    app:layout_constraintStart_toEndOf="@+id/textView"
-                    app:layout_constraintTop_toTopOf="@+id/textView"
-                    app:srcCompat="@drawable/ic_renew" />
+                    app:layout_constraintBottom_toBottomOf="@+id/text_paired_devices"
+                    app:layout_constraintStart_toEndOf="@+id/text_paired_devices"
+                    app:layout_constraintTop_toTopOf="@+id/text_paired_devices"
+                    app:srcCompat="@drawable/ic_arrow_drop_down" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/paired_device_recycler_view"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/margin_normal"
+                    android:visibility="gone"
                     app:layoutManager="LinearLayoutManager"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="1.0"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView"
+                    app:layout_constraintTop_toBottomOf="@+id/text_paired_devices"
                     tools:itemCount="3"
-                    tools:listitem="@layout/item_bluettooth_decive" />
+                    tools:listitem="@layout/item_bluettooth_device" />
 
                 <View
                     android:id="@+id/view"
@@ -145,7 +167,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/textView2"
                     tools:itemCount="3"
-                    tools:listitem="@layout/item_bluettooth_decive" />
+                    tools:listitem="@layout/item_bluettooth_device" />
 
 
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -156,6 +178,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="@{isConnecting ? View.VISIBLE : View.GONE }"
+            tools:visibility="gone"
             android:background="#4A000000">
             <ProgressBar
                 android:layout_width="wrap_content"

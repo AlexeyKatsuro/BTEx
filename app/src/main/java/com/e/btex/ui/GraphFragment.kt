@@ -1,5 +1,7 @@
 package com.e.btex.ui
 
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -21,11 +23,12 @@ import com.e.btex.broadcastReceivers.DeviceStateReceiver
 import com.e.btex.connection.BTService
 import com.e.btex.data.SensorsType
 import com.e.btex.data.dto.Sensors
+import com.e.btex.data.prefs.PreferenceStorage
 import com.e.btex.databinding.FragmentGraphBinding
 import com.e.btex.ui.common.DeviceStateListener
 import com.e.btex.utils.AutoSubscribeReceiver
 import com.e.btex.utils.extensions.executeAfter
-import com.e.btex.utils.extensions.getName
+import com.e.btex.utils.extensions.showInfoInLog
 import com.e.btex.utils.plot.DynamicSeries
 import com.e.btex.utils.plot.SensorDataSource
 import timber.log.Timber
@@ -37,10 +40,7 @@ class GraphFragment : Fragment() {
 
 
     private lateinit var binding: FragmentGraphBinding
-
-
     private lateinit var plot: XYPlot
-
 
     private var deviceStateReceiver by AutoSubscribeReceiver<DeviceStateReceiver>()
 
@@ -51,22 +51,41 @@ class GraphFragment : Fragment() {
     private lateinit var dataSource: SensorDataSource
     private lateinit var series: DynamicSeries
 
+    private lateinit var prefStorage: PreferenceStorage
+
+    private var device: BluetoothDevice? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initBlueToothService()
+        prefStorage = PreferenceStorage.getInstance(requireContext())
+
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    private fun getBluetoothDeviceByAddress(address: String?): BluetoothDevice? {
+        return  try {
+            BluetoothAdapter.getDefaultAdapter()?.let{
+                if(it.isEnabled) {
+                    it.getRemoteDevice(address)
+                } else null
+            }
+        }catch (e: Exception) {
+            Timber.e(e)
+            null
+        }
 
+    }
+
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         binding = FragmentGraphBinding.inflate(inflater, container, false)
         binding.appBar.toolBar.inflateMenu(R.menu.main_menu)
 
         deviceStateReceiver = DeviceStateReceiver()
-
-
-
+        device = getBluetoothDeviceByAddress(prefStorage.deviceAddress?:"")
+        device.showInfoInLog()
 
         plot = binding.plot
 
