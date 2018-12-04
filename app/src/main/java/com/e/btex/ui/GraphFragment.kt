@@ -173,7 +173,7 @@ class GraphFragment : Fragment() {
 
             override fun onFailedConnecting() = Unit
 
-            override fun onCreateConnection() = Unit
+            override fun onCreateConnection(device: BluetoothDevice) = Unit
 
             override fun onDestroyConnection() {
                 Toast.makeText(requireContext(), "Disconnected", Toast.LENGTH_SHORT).show()

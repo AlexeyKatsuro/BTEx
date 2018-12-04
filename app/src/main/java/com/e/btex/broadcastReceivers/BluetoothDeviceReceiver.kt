@@ -9,6 +9,7 @@ import android.content.Intent
 
 class BluetoothDeviceReceiver: BroadcastReceiver(){
     override fun onReceive(context: Context?, intent: Intent) {
+
         if(intent.action == BluetoothDevice.ACTION_FOUND){
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
             onDeviceReceivedListener?.onDeviceReceived(device)

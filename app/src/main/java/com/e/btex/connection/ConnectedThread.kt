@@ -10,7 +10,7 @@ import java.io.IOException
  * receiving incoming data through input/output streams respectively.
  */
 class ConnectedThread(private val socket: BluetoothSocket,
-                      private val listner: DeviceStateListener?) : Thread() {
+                      private val listener: DeviceStateListener?) : Thread() {
 
     private var isRunnig = false
     private val inputStream = socket.inputStream
@@ -20,7 +20,6 @@ class ConnectedThread(private val socket: BluetoothSocket,
 
         Timber.d("ConnectedThread: Starting.")
         isRunnig = true
-        listner?.onCreateConnection()
 
         val buffer = ByteArray(1024)  // buffer store for the stream
 
@@ -35,38 +34,37 @@ class ConnectedThread(private val socket: BluetoothSocket,
         while (isRunnig) {
             // Read from the InputStream
             try {
-//                bytes = inputStream!!.read(buffer)
-//                Timber.d("Read from the InputStream: $bytes Bytes")
-//
-//
-//                if(buffer.sliceArray(0 until 2).contentEquals(byteArrayOf(222.toByte(),175.toByte()))){
-//                    Timber.d("Read Status signature")
-//                    isData = true
-//                    byteReceived = 0
-//                    byteList.clear()
-//                }
-//
-//                if (isData){
-//                    Timber.d("Read Status Data: ${bytes} Bytes")
-//                    byteList.addAll(buffer.slice(0 until bytes))
-//                     byteReceived+=bytes
-//
-//                    if (byteReceived == 23){
-//                        Timber.d("All status data was received: ${byteList.size} Bytes")
-//                        handler.post {
-//                            listner?.onReceiveData(byteList.toByteArray(),byteReceived)
-//                        }
-//                        isData = false
-//                    }
-//                }
-                Thread.sleep(5000)
-                listner?.onReceiveData(byteList.toByteArray(), byteReceived)
+                bytes = inputStream!!.read(buffer)
+                Timber.d("Read from the InputStream: $bytes Bytes")
+
+                if (buffer.sliceArray(0 until 2).contentEquals(byteArrayOf(222.toByte(), 175.toByte()))) {
+                    Timber.d("Read Status signature")
+                    isData = true
+                    byteReceived = 0
+                    byteList.clear()
+                }
+
+                if (isData) {
+                    Timber.d("Read Status Data: ${bytes} Bytes")
+                    byteList.addAll(buffer.slice(0 until bytes))
+                    byteReceived += bytes
+
+                    if (byteReceived == 23) {
+                        Timber.d("All status data was received: ${byteList.size} Bytes")
+
+                        listener?.onReceiveData(byteList.toByteArray(), byteReceived)
+                        isData = false
+                    }
+                }
+                //Mocking
+//                Thread.sleep(5000)
+//                listener?.onReceiveData(byteList.toByteArray(), byteReceived)
 
 
             } catch (e: IOException) {
                 Timber.e(e, "write: Error reading Input Stream.  + ${e.message}")
                 cancel()
-                listner?.onDestroyConnection()
+                listener?.onDestroyConnection()
                 break
             }
 

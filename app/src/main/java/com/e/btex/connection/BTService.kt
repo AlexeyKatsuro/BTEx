@@ -19,6 +19,7 @@ class BTService : Service() {
         const val ACTION_RECEIVE_DATA = "com.e.btex.connection.bt.service.action.RECEIVE_DATA"
         const val EXTRA_DATA = "com.e.btex.connection.bt.service.extra.DATA"
         const val EXTRA_DATA_SIZE = "com.e.btex.connection.bt.service.extra.DATA_SIZE"
+        const val EXTRA_REMOUTE_DEVICE = "com.e.btex.connection.bt.service.extra.REMOUTE_DEVICE"
     }
 
     var connectedDevice: BluetoothDevice? = null
@@ -63,7 +64,12 @@ class BTService : Service() {
 
                 override fun onFailedConnecting() = sendBroadcast(Intent(ACTION_FAILED_CONNECTING))
 
-                override fun onCreateConnection() = sendBroadcast(Intent(ACTION_CREATE_CONNECTION))
+                override fun onCreateConnection(device: BluetoothDevice){
+                    val intent = Intent(ACTION_CREATE_CONNECTION).apply {
+                        putExtra(EXTRA_REMOUTE_DEVICE,device)
+                    }
+                    sendBroadcast(intent)
+                }
 
 
                 override fun onDestroyConnection(){
@@ -87,7 +93,6 @@ class BTService : Service() {
 
     fun startClient(device: BluetoothDevice) {
         if(connectedDevice?.address != device.address) {
-            connectedDevice = device
             bluetoothConnectionService.startClient(device)
         }
     }

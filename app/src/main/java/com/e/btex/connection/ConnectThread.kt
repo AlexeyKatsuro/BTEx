@@ -49,7 +49,8 @@ class ConnectThread(private val device: BluetoothDevice,
         try {
             // This is a blocking call and will only return on a
             // successful connection or an exception
-            //socket.connect()
+            socket.connect()
+            listner?.onCreateConnection(device)
             Timber.d("run: ConnectThread connected.")
             onConneted(socket)
         } catch (e: IOException) {

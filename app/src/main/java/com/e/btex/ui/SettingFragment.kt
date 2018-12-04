@@ -22,6 +22,7 @@ import androidx.navigation.fragment.findNavController
 import com.e.btex.R
 import com.e.btex.broadcastReceivers.*
 import com.e.btex.connection.BTService
+import com.e.btex.data.StatusResponse
 import com.e.btex.data.dto.Sensors
 import com.e.btex.data.prefs.PreferenceStorage
 import com.e.btex.databinding.FragmentSettingBinding
@@ -197,7 +198,7 @@ class SettingFragment : Fragment() {
                 Toast.makeText(requireContext(), "Connection failed", Toast.LENGTH_SHORT).show()
             }
 
-            override fun onCreateConnection() {
+            override fun onCreateConnection(device: BluetoothDevice) {
                 setLockedScreen(false)
                 binding.isConnecting = false
                 binding.executePendingBindings()
@@ -211,25 +212,26 @@ class SettingFragment : Fragment() {
             }
 
             override fun onReceiveData(bytes: ByteArray, size: Int) {
-//                val statusResponse = StatusResponse(bytes)
-//                Timber.d("Status response: $statusResponse")
-//
-//                val sensors = Sensors(
-//                        temperature = statusResponse.temperature,
-//                        humidity = statusResponse.humidity,
-//                        co2 = statusResponse.co2,
-//                        pm1 = statusResponse.pm1,
-//                        pm25 = statusResponse.pm25,
-//                        pm10 = statusResponse.pm10,
-//                        tvoc = statusResponse.tvoc)
+                val statusResponse = StatusResponse(bytes)
+                Timber.d("Status response: $statusResponse")
+
                 val sensors = Sensors(
-                        Random().nextInt(35).toFloat(),
-                        Random().nextInt(1000).toFloat(),
-                        Random().nextInt(325).toFloat(),
-                        Random().nextInt(100).toFloat(),
-                        Random().nextInt(10).toFloat(),
-                        Random().nextInt(50).toFloat(),
-                        Random().nextInt(5).toFloat())
+                        temperature = statusResponse.temperature,
+                        humidity = statusResponse.humidity,
+                        co2 = statusResponse.co2,
+                        pm1 = statusResponse.pm1,
+                        pm25 = statusResponse.pm25,
+                        pm10 = statusResponse.pm10,
+                        tvoc = statusResponse.tvoc)
+                //mocking
+//                val sensors = Sensors(
+//                        Random().nextInt(35).toFloat(),
+//                        Random().nextInt(1000).toFloat(),
+//                        Random().nextInt(325).toFloat(),
+//                        Random().nextInt(100).toFloat(),
+//                        Random().nextInt(10).toFloat(),
+//                        Random().nextInt(50).toFloat(),
+//                        Random().nextInt(5).toFloat())
                 Timber.d("Sensors data: $sensors")
             }
         })
