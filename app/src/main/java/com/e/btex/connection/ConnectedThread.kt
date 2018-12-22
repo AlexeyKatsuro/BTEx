@@ -2,6 +2,7 @@ package com.e.btex.connection
 
 import android.bluetooth.BluetoothSocket
 import com.e.btex.ui.common.DeviceStateListener
+import com.e.btex.utils.extensions.toIntList
 import timber.log.Timber
 import java.io.IOException
 
@@ -36,6 +37,7 @@ class ConnectedThread(private val socket: BluetoothSocket,
             try {
                 bytes = inputStream!!.read(buffer)
                 Timber.d("Read from the InputStream: $bytes Bytes")
+                Timber.d("buffer ${buffer.sliceArray(0 until bytes).toIntList()}")
 
                 if (buffer.sliceArray(0 until 2).contentEquals(byteArrayOf(222.toByte(), 175.toByte()))) {
                     Timber.d("Read Status signature")

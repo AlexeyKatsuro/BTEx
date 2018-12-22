@@ -22,6 +22,7 @@ import com.e.btex.R
 import com.e.btex.broadcastReceivers.DeviceStateReceiver
 import com.e.btex.connection.BTService
 import com.e.btex.data.SensorsType
+import com.e.btex.data.StatusResponse
 import com.e.btex.data.dto.Sensors
 import com.e.btex.data.prefs.PreferenceStorage
 import com.e.btex.databinding.FragmentGraphBinding
@@ -181,25 +182,25 @@ class GraphFragment : Fragment() {
 
             override fun onReceiveData(bytes: ByteArray, size: Int) {
                 Timber.d("onReceiveData")
-//                val statusResponse = StatusResponse(bytes)
-//                Timber.d("Status response: $statusResponse")
+                val statusResponse = StatusResponse(bytes)
+                Timber.d("Status response: $statusResponse")
 //
-//                val sensors = Sensors(
-//                        temperature = statusResponse.temperature,
-//                        humidity = statusResponse.humidity,
-//                        co2 = statusResponse.co2,
-//                        pm1 = statusResponse.pm1,
-//                        pm25 = statusResponse.pm25,
-//                        pm10 = statusResponse.pm10,
-//                        tvoc = statusResponse.tvoc)
                 val sensors = Sensors(
-                        Random().nextInt(35).toFloat(),
-                        Random().nextInt(1000).toFloat(),
-                        Random().nextInt(325).toFloat(),
-                        Random().nextInt(100).toFloat(),
-                        Random().nextInt(10).toFloat(),
-                        Random().nextInt(50).toFloat(),
-                        Random().nextInt(5).toFloat())
+                        temperature = statusResponse.temperature/100.0,
+                        humidity = statusResponse.humidity/100.0,
+                        co2 = statusResponse.co2,
+                        pm1 = statusResponse.pm1,
+                        pm25 = statusResponse.pm25,
+                        pm10 = statusResponse.pm10,
+                        tvoc = statusResponse.tvoc)
+//                val sensors = Sensors(
+//                        Random().nextInt(35).toFloat(),
+//                        Random().nextInt(1000).toFloat(),
+//                        Random().nextInt(325).toFloat(),
+//                        Random().nextInt(100).toFloat(),
+//                        Random().nextInt(10).toFloat(),
+//                        Random().nextInt(50).toFloat(),
+//                        Random().nextInt(5).toFloat())
 
                 binding.executeAfter {
                     this.sensors = sensors
